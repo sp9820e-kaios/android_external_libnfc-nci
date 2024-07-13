@@ -16,7 +16,6 @@
  *
  ******************************************************************************/
 
-
 /******************************************************************************
  *
  *  This is the main implementation file for the NFA device manager.
@@ -42,8 +41,7 @@ static const tNFA_SYS_REG nfa_dm_sys_reg =
 };
 
 
-tNFA_DM_CB  nfa_dm_cb = {FALSE};
-
+tNFA_DM_CB  nfa_dm_cb = {0, };
 
 #define NFA_DM_NUM_ACTIONS  (NFA_DM_MAX_EVT & 0x00ff)
 
@@ -104,7 +102,6 @@ void nfa_dm_init (void)
     nfa_dm_cb.poll_disc_handle = NFA_HANDLE_INVALID;
     nfa_dm_cb.disc_cb.disc_duration = NFA_DM_DISC_DURATION_POLL;
     nfa_dm_cb.nfcc_pwr_mode    = NFA_DM_PWR_MODE_FULL;
-
     /* register message handler on NFA SYS */
     nfa_sys_register (NFA_ID_DM, &nfa_dm_sys_reg);
 }
@@ -190,7 +187,7 @@ BOOLEAN nfa_dm_is_protocol_supported (tNFC_PROTOCOL protocol, UINT8 sel_res)
             ||(protocol == NFC_PROTOCOL_T3T)
             ||(protocol == NFC_PROTOCOL_ISO_DEP)
             ||(protocol == NFC_PROTOCOL_NFC_DEP)
-            ||(protocol == NFC_PROTOCOL_15693)  );
+            ||(protocol == NFC_PROTOCOL_15693));
 }
 /*******************************************************************************
 **
@@ -231,7 +228,7 @@ tNFA_STATUS nfa_dm_check_set_config (UINT8 tlv_list_len, UINT8 *p_tlv_list, BOOL
     tNFC_STATUS nfc_status;
     UINT32 cur_bit;
 
-    NFA_TRACE_DEBUG0 ("nfa_dm_check_set_config ()");
+    NFA_TRACE_DEBUG1 ("nfa_dm_check_set_config () tlv_len=%d",tlv_list_len);
 
     /* We only allow 32 pending SET_CONFIGs */
     if (nfa_dm_cb.setcfg_pending_num >= NFA_DM_SETCONFIG_PENDING_MAX)
@@ -250,6 +247,13 @@ tNFA_STATUS nfa_dm_check_set_config (UINT8 tlv_list_len, UINT8 *p_tlv_list, BOOL
 
         switch (type)
         {
+        /*
+        **  Poll F Configuration
+        */
+        case NFC_PMID_PF_RC:
+            p_stored = nfa_dm_cb.params.pf_rc;
+            max_len  = NCI_PARAM_LEN_PF_RC;
+            break;
         case NFC_PMID_TOTAL_DURATION:
             p_stored = nfa_dm_cb.params.total_duration;
             max_len  = NCI_PARAM_LEN_TOTAL_DURATION;
@@ -288,9 +292,9 @@ tNFA_STATUS nfa_dm_check_set_config (UINT8 tlv_list_len, UINT8 *p_tlv_list, BOOL
         **  Listen B Configuration
         */
         case NFC_PMID_LB_SENSB_INFO:
-            p_stored  = nfa_dm_cb.params.lb_sensb_info;
-            max_len   = NCI_PARAM_LEN_LB_SENSB_INFO;
-            p_cur_len = &nfa_dm_cb.params.lb_sensb_info_len;
+                p_stored  = nfa_dm_cb.params.lb_sensb_info;
+                max_len   = NCI_PARAM_LEN_LB_SENSB_INFO;
+                p_cur_len = &nfa_dm_cb.params.lb_sensb_info_len;
             break;
         case NFC_PMID_LB_NFCID0:
             p_stored  = nfa_dm_cb.params.lb_nfcid0;
@@ -320,23 +324,12 @@ tNFA_STATUS nfa_dm_check_set_config (UINT8 tlv_list_len, UINT8 *p_tlv_list, BOOL
             p_stored  = nfa_dm_cb.params.lf_protocol;
             max_len   = NCI_PARAM_LEN_LF_PROTOCOL;
             p_cur_len = &nfa_dm_cb.params.lf_protocol_len;
+            NFA_TRACE_ERROR3 ("nfa_dm_check_set_config () p_stored=%d, p_value=%d, p_cur_len=%d",p_stored,p_value,p_cur_len);
             break;
         case NFC_PMID_LF_T3T_FLAGS2:
             p_stored  = nfa_dm_cb.params.lf_t3t_flags2;
             max_len   = NCI_PARAM_LEN_LF_T3T_FLAGS2;
             p_cur_len = &nfa_dm_cb.params.lf_t3t_flags2_len;
-            break;
-        case NFC_PMID_LF_T3T_PMM:
-            p_stored = nfa_dm_cb.params.lf_t3t_pmm;
-            max_len  = NCI_PARAM_LEN_LF_T3T_PMM;
-            break;
-
-        /*
-        **  ISO-DEP and NFC-DEP Configuration
-        */
-        case NFC_PMID_FWI:
-            p_stored = nfa_dm_cb.params.fwi;
-            max_len  = NCI_PARAM_LEN_FWI;
             break;
         case NFC_PMID_WT:
             p_stored = nfa_dm_cb.params.wt;
@@ -412,8 +405,10 @@ tNFA_STATUS nfa_dm_check_set_config (UINT8 tlv_list_len, UINT8 *p_tlv_list, BOOL
     }
 
     /* If any TVLs to update, or if the SetConfig was initiated by the application, then send the SET_CONFIG command */
+    /*if (updated_len || app_init) app_init is TRUE when setconfig is invoked from application. For extra setconfigs from internal to
+    stack, updated_len will be true. To avoid extra setconfigs from stack which is NOT required by DTA, condition is modified*/
     if (updated_len || app_init)
-    {
+        {
         if ((nfc_status = NFC_SetConfig (updated_len, p_tlv_list)) == NFC_STATUS_OK)
         {
             /* Keep track of whether we will need to notify NFA_DM_SET_CONFIG_EVT on NFC_SET_CONFIG_REVT */

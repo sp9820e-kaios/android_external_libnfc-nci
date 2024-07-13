@@ -16,7 +16,6 @@
  *
  ******************************************************************************/
 
-
 /******************************************************************************
  *
  *  This is the private interface file for the NFA HCI.
@@ -28,7 +27,6 @@
 #include "nfa_hci_api.h"
 
 extern BOOLEAN HCI_LOOPBACK_DEBUG;
-
 /*****************************************************************************
 **  Constants and data types
 *****************************************************************************/
@@ -362,7 +360,6 @@ typedef struct
 #define NFA_HCI_FL_DISABLING        0x01                /* sub system is being disabled */
 #define NFA_HCI_FL_NV_CHANGED       0x02                /* NV Ram changed */
 
-
 /* NFA HCI control block */
 typedef struct
 {
@@ -398,6 +395,9 @@ typedef struct
     UINT8                           *p_msg_data;                        /* For segmentation - reassembled message */
     UINT8                           type;                               /* Instruction type of incoming message */
     UINT8                           inst;                               /* Instruction of incoming message */
+#if (NFC_SEC_NOT_OPEN_INCLUDED == TRUE) /* START_SLSI [S14111813] */
+    BOOLEAN                         dh_need_clear_pipe;                 /* Instruction flag to clear all pipe */
+#endif
 
     BUFFER_Q                        hci_api_q;                          /* Buffer Q to hold incoming API commands */
     BUFFER_Q                        hci_host_reset_api_q;               /* Buffer Q to hold incoming API commands to a host that is reactivating */

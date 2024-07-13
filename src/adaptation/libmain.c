@@ -16,6 +16,7 @@
  *
  ******************************************************************************/
 #include "OverrideLog.h"
+#include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <malloc.h>
@@ -279,4 +280,3 @@ void verify_stack_non_volatile_store ()
     if (isValid == FALSE)
         delete_stack_non_volatile_store (TRUE);
 }
-

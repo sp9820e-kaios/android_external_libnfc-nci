@@ -16,7 +16,6 @@
  *
  ******************************************************************************/
 
-
 /******************************************************************************
  *
  *  This is the private interface file for the NFA device manager.
@@ -311,9 +310,7 @@ typedef UINT8 tNFA_DM_RF_DISC_EVT;
 #define NFA_DM_DISC_MASK_LFA_NFC_DEP            0x08000000
 #define NFA_DM_DISC_MASK_L_LEGACY               0x10000000
 #define NFA_DM_DISC_MASK_LISTEN                 0xFFFF0000
-
 #define NFA_DM_DISC_MASK_NFC_DEP                0x0C481848
-
 
 typedef UINT32  tNFA_DM_DISC_TECH_PROTO_MASK;
 
@@ -463,6 +460,8 @@ typedef struct
     UINT8 atr_req_gen_bytes_len;
     UINT8 atr_res_gen_bytes[NCI_MAX_GEN_BYTES_LEN];
     UINT8 atr_res_gen_bytes_len;
+
+    UINT8 pf_rc[NCI_PARAM_LEN_PF_RC];
 } tNFA_DM_PARAMS;
 
 /*
@@ -539,6 +538,7 @@ extern UINT8 *p_nfa_dm_gen_cfg;
 extern UINT8 nfa_ee_max_ee_cfg;
 extern tNCI_DISCOVER_MAPS *p_nfa_dm_interface_mapping;
 extern UINT8 nfa_dm_num_dm_interface_mapping;
+extern BOOLEAN nfa_poll_bail_out_mode;
 
 /* NFA device manager control block */
 #if NFA_DYNAMIC_MEMORY == FALSE
@@ -597,6 +597,7 @@ BOOLEAN nfa_dm_ndef_dereg_hdlr (tNFA_DM_MSG *p_data);
 BOOLEAN nfa_dm_tout (tNFA_DM_MSG *p_data);
 BOOLEAN nfa_dm_act_reg_vsc (tNFA_DM_MSG *p_data);
 BOOLEAN nfa_dm_act_send_vsc (tNFA_DM_MSG *p_data);
+UINT16 nfa_dm_act_get_rf_disc_duration ();
 BOOLEAN nfa_dm_act_disable_timeout (tNFA_DM_MSG *p_data);
 BOOLEAN nfa_dm_act_nfc_cback_data (tNFA_DM_MSG *p_data);
 
@@ -630,8 +631,6 @@ tNFC_STATUS nfa_dm_disc_sleep_wakeup (void);
 tNFC_STATUS nfa_dm_disc_start_kovio_presence_check (void);
 BOOLEAN nfa_dm_is_raw_frame_session (void);
 BOOLEAN nfa_dm_is_p2p_paused (void);
-
-
 #if (NFC_NFCEE_INCLUDED == FALSE)
 #define nfa_ee_get_tech_route(ps, ha) memset(ha, NFC_DH_ID, NFA_DM_MAX_TECH_ROUTE);
 #endif
@@ -640,6 +639,4 @@ BOOLEAN nfa_dm_is_p2p_paused (void);
 char *nfa_dm_nfc_revt_2_str (tNFC_RESPONSE_EVT event);
 #endif
 
-
 #endif /* NFA_DM_INT_H */
-

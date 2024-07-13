@@ -16,7 +16,6 @@
  *
  ******************************************************************************/
 
-
 /******************************************************************************
  *
  *  NFC Hardware Abstraction Layer API
@@ -70,8 +69,6 @@ typedef UINT8 tHAL_NFC_STATUS;
 #define HAL_NFC_REQUEST_CONTROL_EVT     0x04
 #define HAL_NFC_RELEASE_CONTROL_EVT     0x05
 #define HAL_NFC_ERROR_EVT               0x06
-
-
 typedef void (tHAL_NFC_STATUS_CBACK) (tHAL_NFC_STATUS status);
 typedef void (tHAL_NFC_CBACK) (UINT8 event, tHAL_NFC_STATUS status);
 typedef void (tHAL_NFC_DATA_CBACK) (UINT16 data_len, UINT8   *p_data);
@@ -90,7 +87,6 @@ typedef BOOLEAN (tHAL_API_PREDISCOVER) (void);
 typedef void (tHAL_API_CONTROL_GRANTED) (void);
 typedef void (tHAL_API_POWER_CYCLE) (void);
 typedef UINT8 (tHAL_API_GET_MAX_NFCEE) (void);
-
 
 #define NFC_HAL_DM_PRE_SET_MEM_LEN  5
 typedef struct
@@ -123,10 +119,7 @@ typedef struct
     tHAL_API_CONTROL_GRANTED *control_granted;
     tHAL_API_POWER_CYCLE *power_cycle;
     tHAL_API_GET_MAX_NFCEE *get_max_ee;
-
-
 } tHAL_NFC_ENTRY;
-
 
 /*******************************************************************************
 ** HAL API Function Prototypes

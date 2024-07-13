@@ -16,7 +16,6 @@
  *
  ******************************************************************************/
 
-
 /******************************************************************************
  *
  *  This is the public interface file for NFA HCI, Broadcom's NFC
@@ -27,7 +26,6 @@
 #define NFA_HCI_API_H
 
 #include "nfa_api.h"
-
 /*****************************************************************************
 **  Constants and data types
 *****************************************************************************/
@@ -39,16 +37,16 @@
 #define NFA_HCI_DEBUG_DISABLE_LOOPBACK          102
 
 /* NFA HCI callback events */
-#define NFA_HCI_REGISTER_EVT	                0x00    /* Application registered                       */
+#define NFA_HCI_REGISTER_EVT                    0x00    /* Application registered                       */
 #define NFA_HCI_DEREGISTER_EVT                  0x01    /* Application deregistered                     */
 #define NFA_HCI_GET_GATE_PIPE_LIST_EVT          0x02    /* Retrieved gates,pipes assoc. to application  */
-#define NFA_HCI_ALLOCATE_GATE_EVT	            0x03    /* A generic gate allocated to the application  */
-#define NFA_HCI_DEALLOCATE_GATE_EVT	            0x04    /* A generic gate is released                   */
-#define NFA_HCI_CREATE_PIPE_EVT         	    0x05    /* Pipe is created                              */
-#define NFA_HCI_OPEN_PIPE_EVT         	        0x06    /* Pipe is opened / could not open              */
-#define NFA_HCI_CLOSE_PIPE_EVT         	        0x07    /* Pipe is closed / could not close             */
-#define NFA_HCI_DELETE_PIPE_EVT         	    0x08    /* Pipe is deleted                              */
-#define NFA_HCI_HOST_LIST_EVT       	        0x09    /* Received list of Host from Host controller   */
+#define NFA_HCI_ALLOCATE_GATE_EVT               0x03    /* A generic gate allocated to the application  */
+#define NFA_HCI_DEALLOCATE_GATE_EVT             0x04    /* A generic gate is released                   */
+#define NFA_HCI_CREATE_PIPE_EVT                 0x05    /* Pipe is created                              */
+#define NFA_HCI_OPEN_PIPE_EVT                   0x06    /* Pipe is opened / could not open              */
+#define NFA_HCI_CLOSE_PIPE_EVT                  0x07    /* Pipe is closed / could not close             */
+#define NFA_HCI_DELETE_PIPE_EVT                 0x08    /* Pipe is deleted                              */
+#define NFA_HCI_HOST_LIST_EVT                   0x09    /* Received list of Host from Host controller   */
 #define NFA_HCI_INIT_EVT                        0x0A    /* HCI subsytem initialized                     */
 #define NFA_HCI_EXIT_EVT                        0x0B    /* HCI subsytem exited                          */
 #define NFA_HCI_RSP_RCVD_EVT                    0x0C    /* Response recvd to cmd sent on app owned pipe */
@@ -62,13 +60,16 @@
 #define NFA_HCI_GET_REG_RSP_EVT                 0x14    /* Received response to read registry command   */
 #define NFA_HCI_SET_REG_RSP_EVT                 0x15    /* Received response to write registry command  */
 #define NFA_HCI_ADD_STATIC_PIPE_EVT             0x16    /* A static pipe is added                       */
-
 typedef UINT8 tNFA_HCI_EVT;
 
 #define NFA_MAX_HCI_APP_NAME_LEN                0x10    /* Max application name length */
 #define NFA_MAX_HCI_CMD_LEN                     255     /* Max HCI command length */
 #define NFA_MAX_HCI_RSP_LEN                     255     /* Max HCI event length */
+#if (NFC_SEC_NOT_OPEN_INCLUDED == TRUE)
+#define NFA_MAX_HCI_EVENT_LEN                   276     /* Max EVT_TRANSACTION SIZE = 276 */
+#else
 #define NFA_MAX_HCI_EVENT_LEN                   260     /* Max HCI event length */
+#endif
 #define NFA_MAX_HCI_DATA_LEN                    260     /* Max HCI data length */
 
 /* NFA HCI PIPE states */
@@ -241,7 +242,6 @@ typedef struct
     UINT8               data_len;                       /* length of the registry parameter */
     UINT8               reg_data[NFA_MAX_HCI_DATA_LEN]; /* Registry parameter */
 } tNFA_HCI_REGISTRY;
-
 
 /* Union of all hci callback structures */
 typedef union
@@ -608,4 +608,3 @@ NFC_API extern void NFA_HciDebug (UINT8 action, UINT8 size, UINT8 *p_data);
 #endif
 
 #endif /* NFA_P2P_API_H */
-

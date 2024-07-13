@@ -22,10 +22,13 @@ extern "C"
     #include "gki.h"
     #include "nfa_api.h"
     #include "nfc_int.h"
+    #include "nfc_target.h"
+    #include "vendor_cfg.h"
 }
 #include "config.h"
 #include "android_logmsg.h"
 
+#undef LOG_TAG
 #define LOG_TAG "NfcAdaptation"
 
 extern "C" void GKI_shutdown();
@@ -47,14 +50,21 @@ char bcm_nfc_location[120];
 char nci_hal_module[64];
 
 static UINT8 nfa_dm_cfg[sizeof ( tNFA_DM_CFG ) ];
+static UINT8 nfa_proprietary_cfg[sizeof ( tNFA_PROPRIETARY_CFG )];
 extern tNFA_DM_CFG *p_nfa_dm_cfg;
+extern tNFA_PROPRIETARY_CFG *p_nfa_proprietary_cfg;
 extern UINT8 nfa_ee_max_ee_cfg;
 extern const UINT8  nfca_version_string [];
 extern const UINT8  nfa_version_string [];
 static UINT8 deviceHostWhiteList [NFA_HCI_MAX_HOST_IN_NETWORK];
 static tNFA_HCI_CFG jni_nfa_hci_cfg;
 extern tNFA_HCI_CFG *p_nfa_hci_cfg;
+extern BOOLEAN nfa_poll_bail_out_mode;
 
+#if (NFC_SEC_NOT_OPEN_INCLUDED == TRUE)
+tNFC_FW_VERSION NfcAdaptation::fw_version;  /* START_SLSI [S15052703] */
+static bool firstInitRsp = true;                   /* START_SLSI [S14111804] */
+#endif
 /*******************************************************************************
 **
 ** Function:    NfcAdaptation::NfcAdaptation()
@@ -117,6 +127,7 @@ void NfcAdaptation::Initialize ()
     ALOGE("%s: ver=%s nfa=%s", func, nfca_version_string, nfa_version_string);
     unsigned long num;
 
+#if (NFC_SEC_NOT_OPEN_INCLUDED != TRUE) /* START_SLSI [S14111802] */
     if ( GetNumValue ( NAME_USE_RAW_NCI_TRACE, &num, sizeof ( num ) ) )
     {
         if (num == 1)
@@ -126,6 +137,7 @@ void NfcAdaptation::Initialize ()
             ALOGD("%s: logging protocol in raw format", func);
         }
     }
+#endif
     if ( !GetStrValue ( NAME_NFA_STORAGE, bcm_nfc_location, sizeof ( bcm_nfc_location ) ) )
     {
         strlcpy (bcm_nfc_location, "/data/nfc", sizeof(bcm_nfc_location));
@@ -134,14 +146,21 @@ void NfcAdaptation::Initialize ()
     initializeProtocolLogLevel ();
 
     if ( GetStrValue ( NAME_NFA_DM_CFG, (char*)nfa_dm_cfg, sizeof ( nfa_dm_cfg ) ) )
-        p_nfa_dm_cfg = ( tNFA_DM_CFG * ) &nfa_dm_cfg[0];
+        p_nfa_dm_cfg = ( tNFA_DM_CFG * ) ((void*)&nfa_dm_cfg[0]);
 
-    if ( GetNumValue ( NAME_NFA_MAX_EE_SUPPORTED, &num, sizeof ( num ) ) )
+    nfa_ee_max_ee_cfg = NFA_EE_MAX_EE_SUPPORTED;
+    ALOGD("%s: Overriding NFA_EE_MAX_EE_SUPPORTED to use %d", func, nfa_ee_max_ee_cfg);
+
+    if ( GetNumValue ( NAME_NFA_POLL_BAIL_OUT_MODE, &num, sizeof ( num ) ) )
     {
-        nfa_ee_max_ee_cfg = num;
-        ALOGD("%s: Overriding NFA_EE_MAX_EE_SUPPORTED to use %d", func, nfa_ee_max_ee_cfg);
+        nfa_poll_bail_out_mode = num;
+        ALOGD("%s: Overriding NFA_POLL_BAIL_OUT_MODE to use %d", func, nfa_poll_bail_out_mode);
     }
 
+    if ( GetStrValue ( NAME_NFA_PROPRIETARY_CFG, (char*)nfa_proprietary_cfg, sizeof ( tNFA_PROPRIETARY_CFG ) ) )
+    {
+        p_nfa_proprietary_cfg = (tNFA_PROPRIETARY_CFG*)(void*)( &nfa_proprietary_cfg[0]);
+    }
     //configure device host whitelist of HCI host ID's; see specification ETSI TS 102 622 V11.1.10
     //(2012-10), section 6.1.3.1
     num = GetStrValue ( NAME_DEVICE_HOST_WHITE_LIST, (char*) deviceHostWhiteList, sizeof ( deviceHostWhiteList ) );
@@ -195,6 +214,11 @@ void NfcAdaptation::Finalize()
     AutoThreadMutex  a(sLock);
 
     ALOGD ("%s: enter", func);
+
+#if(NFC_SEC_NOT_OPEN_INCLUDED == TRUE) /* START_SLSI [S14111804] */
+    firstInitRsp = true;
+#endif
+
     GKI_shutdown ();
 
     resetConfig();
@@ -234,6 +258,7 @@ void NfcAdaptation::signal ()
 UINT32 NfcAdaptation::NFCA_TASK (UINT32 arg)
 {
     const char* func = "NfcAdaptation::NFCA_TASK";
+    (void)(arg);
     ALOGD ("%s: enter", func);
     GKI_run (0);
     ALOGD ("%s: exit", func);
@@ -252,6 +277,7 @@ UINT32 NfcAdaptation::NFCA_TASK (UINT32 arg)
 UINT32 NfcAdaptation::Thread (UINT32 arg)
 {
     const char* func = "NfcAdaptation::Thread";
+    (void)(arg);
     ALOGD ("%s: enter", func);
 
     {
@@ -296,11 +322,13 @@ void NfcAdaptation::InitializeHalDeviceContext ()
     const char* func = "NfcAdaptation::InitializeHalDeviceContext";
     ALOGD ("%s: enter", func);
     int ret = 0; //0 means success
+#if(NFC_SEC_NOT_OPEN_INCLUDED != TRUE)
     if ( !GetStrValue ( NAME_NCI_HAL_MODULE, nci_hal_module, sizeof ( nci_hal_module) ) )
     {
         ALOGE("No HAL module specified in config, falling back to BCM2079x");
-        strlcpy (nci_hal_module, "nfc_nci.bcm2079x", sizeof(nci_hal_module));
+    strlcpy (nci_hal_module, "nfc_nci.bcm2079x", sizeof(nci_hal_module));
     }
+#endif
     const hw_module_t* hw_module = NULL;
 
     mHalEntryFuncs.initialize = HalInitialize;
@@ -314,7 +342,12 @@ void NfcAdaptation::InitializeHalDeviceContext ()
     mHalEntryFuncs.power_cycle = HalPowerCycle;
     mHalEntryFuncs.get_max_ee = HalGetMaxNfcee;
 
+#if (NFC_SEC_NOT_OPEN_INCLUDED == TRUE)
+    ALOGE("use NFC_NCI_HARDWARE_MODULE_ID");
+    ret = hw_get_module (NFC_NCI_HARDWARE_MODULE_ID, &hw_module);
+#else
     ret = hw_get_module (nci_hal_module, &hw_module);
+#endif
     if (ret == 0)
     {
         ret = nfc_nci_open (hw_module, &mHalDeviceContext);
@@ -551,7 +584,7 @@ void NfcAdaptation::HalPowerCycle ()
 *******************************************************************************/
 UINT8 NfcAdaptation::HalGetMaxNfcee()
 {
-    const char* func = "NfcAdaptation::HalPowerCycle";
+    const char* func = "NfcAdaptation::HalGetMaxNfcee";
     UINT8 maxNfcee = 0;
     ALOGD ("%s", func);
     if (mHalDeviceContext)
@@ -585,12 +618,10 @@ void NfcAdaptation::DownloadFirmware ()
     ALOGD ("%s: try open HAL", func);
     HalOpen (HalDownloadFirmwareCallback, HalDownloadFirmwareDataCallback);
     mHalOpenCompletedEvent.wait ();
+    mHalOpenCompletedEvent.unlock();
 
-    mHalCloseCompletedEvent.lock ();
     ALOGD ("%s: try close HAL", func);
     HalClose ();
-    mHalCloseCompletedEvent.wait ();
-
     HalTerminate ();
     ALOGD ("%s: exit", func);
 }
@@ -607,9 +638,28 @@ void NfcAdaptation::DownloadFirmware ()
 void NfcAdaptation::HalDownloadFirmwareCallback (nfc_event_t event, nfc_status_t event_status)
 {
     const char* func = "NfcAdaptation::HalDownloadFirmwareCallback";
+    (void)(event_status);
     ALOGD ("%s: event=0x%X", func, event);
     switch (event)
     {
+#if(NFC_SEC_NOT_OPEN_INCLUDED == TRUE) /* START_SLSI [S14111804] */
+    case HAL_NFC_OPEN_CPLT_EVT:
+        ALOGD ("%s: HAL_NFC_OPEN_CPLT_EVT", func);
+        {
+            UINT8 nci_reset[] = {0x20, 0x00, 0x01, 0x01};
+            ALOGD ("%s: Send CORE_RESET_CMD", func);
+            HalWrite(4, nci_reset); // CORE_RESET_CMD
+        }
+        break;
+    case HAL_NFC_POST_INIT_CPLT_EVT:
+        ALOGD ("%s: HAL_NFC_INIT_CPLT_EVT", func);
+        mHalOpenCompletedEvent.signal ();
+        break;
+    case HAL_NFC_CLOSE_CPLT_EVT:
+        ALOGD ("%s: HAL_NFC_CLOSE_CPLT_EVT", func);
+        mHalCloseCompletedEvent.signal ();
+        break;
+#else
     case HAL_NFC_OPEN_CPLT_EVT:
         {
             ALOGD ("%s: HAL_NFC_OPEN_CPLT_EVT", func);
@@ -622,6 +672,7 @@ void NfcAdaptation::HalDownloadFirmwareCallback (nfc_event_t event, nfc_status_t
             mHalCloseCompletedEvent.signal ();
             break;
         }
+#endif
     }
 }
 
@@ -636,6 +687,50 @@ void NfcAdaptation::HalDownloadFirmwareCallback (nfc_event_t event, nfc_status_t
 *******************************************************************************/
 void NfcAdaptation::HalDownloadFirmwareDataCallback (uint16_t data_len, uint8_t* p_data)
 {
+#if(NFC_SEC_NOT_OPEN_INCLUDED == TRUE) /* START_SLSI [S14111804] */
+    const char* func = "NfcAdaptation::HalDownloadFirmwareDataCallback";
+    ALOGD ("%s: len=%u", func, data_len);
+
+    if (data_len < 3)
+        return;
+
+    UINT8 mt = p_data[0] & 0xE0;
+    UINT8 gid = p_data[0] & 0x0F;
+    UINT8 oid = p_data[1];
+    UINT8 status = p_data[3];
+
+    /* START_SLSI [S15052703] */
+    UINT8 *p_ver = &p_data[(p_data[2]+3)-4];
+
+    if (mt == 0x40) // NCI_RSP
+    {
+        if (gid == 0x00 && oid == 0x00) // CORE_RESET_RSP
+        {
+            if (status == 0x00) // STATUS_OK
+            {
+                UINT8 nci_init[] = {0x20, 0x01, 0x00};
+                HalWrite(4, nci_init); // CORE_INIT_CMD
+            }
+        }
+        else if (gid == 0x00 && oid == 0x01) // CORE_INIT_RSP
+        {
+            /* START_SLSI [S15052703] */
+            if(status == 0x00)
+            {
+                fw_version.major_version = (p_ver[0]>>4)&0xF;
+                fw_version.minor_version = p_ver[0] & 0xF;
+                fw_version.build_info_high = p_ver[1];
+                fw_version.build_info_low = p_ver[2];
+            }
+            ALOGD ("%s: is first init rsp: %d", func, firstInitRsp);
+            if (firstInitRsp && status == 0x00) // STATUS_OK
+            {
+                HalCoreInitialized(p_data); // POST INIT
+                firstInitRsp = false;
+            }
+        }
+    }
+#endif
 }
 
 

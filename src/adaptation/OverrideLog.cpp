@@ -27,7 +27,13 @@
 #include <string.h>
 #include "config.h"
 #include "android_logmsg.h"
+
+#undef LOG_TAG
+#if (NFC_SEC_NOT_OPEN_INCLUDED == TRUE) /* START_SLSI [S14111802] */
+#define LOG_TAG "SecNfcJni"
+#else
 #define LOG_TAG "BrcmNfcJni"
+#endif
 
 
 /*******************************************************************************
@@ -55,7 +61,6 @@ unsigned char initializeGlobalAppLogLevel ()
     num = 1;
     if (GetNumValue (NAME_APPL_TRACE_LEVEL, &num, sizeof(num)))
         appl_trace_level = (unsigned char) num;
-
     int len = property_get ("nfc.app_log_level", valueStr, "");
     if (len > 0)
     {
@@ -70,11 +75,13 @@ unsigned char initializeGlobalAppLogLevel ()
         appl_trace_level = BT_TRACE_LEVEL_DEBUG;
     ALOGD ("%s: level=%u", __FUNCTION__, appl_trace_level);
 
+#if (NFC_SEC_NOT_OPEN_INCLUDED != TRUE) /* START_SLSI [S14111802] */
     if (appl_trace_level < BT_TRACE_LEVEL_DEBUG)
     {
         //display protocol traces in raw format
         ProtoDispAdapterUseRawOutput (TRUE);
     }
+#endif
     return appl_trace_level;
 }
 

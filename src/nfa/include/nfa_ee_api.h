@@ -16,7 +16,6 @@
  *
  ******************************************************************************/
 
-
 /******************************************************************************
  *
  *  NFA interface to NFCEE
@@ -82,6 +81,11 @@ typedef UINT8 tNFA_EE_MD;
 #define NFA_EE_PWR_STATE_ON         0x01    /* The device is on                 */
 #define NFA_EE_PWR_STATE_SWITCH_OFF 0x02    /* The device is switched off       */
 #define NFA_EE_PWR_STATE_BATT_OFF   0x04    /* The device's battery is removed  */
+#if (NFC_SEC_NOT_OPEN_INCLUDED == TRUE) /* START_SLSI [S14111806] */
+#define NFA_EE_PWR_STATE_SUB_1      0x08    /* Switched On sub-state 1          */
+#define NFA_EE_PWR_STATE_SUB_2      0x10    /* Switched On sub-state 2          */
+#define NFA_EE_PWR_STATE_SUB_3      0x20    /* Switched On sub-state 3          */
+#endif
 #define NFA_EE_PWR_STATE_NONE       0       /* used to remove a particular technology or protocol based routing cfg of a handle from the routing table. */
 typedef UINT8 tNFA_EE_PWR_STATE;
 
@@ -93,8 +97,6 @@ typedef UINT8 tNFA_EE_PWR_STATE;
 #define NFA_EE_STATUS_ACTIVATING        (NFA_EE_STATUS_PENDING+NFC_NFCEE_STATUS_ACTIVE)
 #define NFA_EE_STATUS_DEACTIVATING      (NFA_EE_STATUS_PENDING+NFC_NFCEE_STATUS_INACTIVE)
 typedef UINT8 tNFA_EE_STATUS;
-
-
 
 /* additional NFCEE Info */
 typedef struct
@@ -166,6 +168,10 @@ typedef struct
     tNFA_NFC_PROTOCOL   lb_protocol;        /* Listen B protocol    */
     tNFA_NFC_PROTOCOL   lf_protocol;        /* Listen F protocol    */
     tNFA_NFC_PROTOCOL   lbp_protocol;       /* Listen B' protocol   */
+#if (NFC_SEC_NOT_OPEN_INCLUDED == TRUE) /* START_SLSI [S15100101] */
+    tNFC_RF_TECH_N_MODE other_tech;
+    UINT16              sak;
+#endif
 } tNFA_EE_DISCOVER_INFO;
 
 /* Data for NFA_EE_DISCOVER_REQ_EVT */
@@ -318,7 +324,11 @@ NFC_API extern tNFA_STATUS NFA_EeModeSet (tNFA_HANDLE    ee_handle,
 NFC_API extern tNFA_STATUS NFA_EeSetDefaultTechRouting (tNFA_HANDLE          ee_handle,
                                                         tNFA_TECHNOLOGY_MASK technologies_switch_on,
                                                         tNFA_TECHNOLOGY_MASK technologies_switch_off,
-                                                        tNFA_TECHNOLOGY_MASK technologies_battery_off);
+                                                        tNFA_TECHNOLOGY_MASK technologies_battery_off
+#if (NFC_SEC_NOT_OPEN_INCLUDED == TRUE) /* START_SLSI [S14111806] */
+                                                        ,tNFA_TECHNOLOGY_MASK technologies_sub_state[3]
+#endif
+);
 
 /*******************************************************************************
 **
@@ -343,7 +353,11 @@ NFC_API extern tNFA_STATUS NFA_EeSetDefaultTechRouting (tNFA_HANDLE          ee_
 NFC_API extern tNFA_STATUS NFA_EeSetDefaultProtoRouting (tNFA_HANDLE         ee_handle,
                                                          tNFA_PROTOCOL_MASK  protocols_switch_on,
                                                          tNFA_PROTOCOL_MASK  protocols_switch_off,
-                                                         tNFA_PROTOCOL_MASK  protocols_battery_off);
+                                                         tNFA_PROTOCOL_MASK  protocols_battery_off
+#if (NFC_SEC_NOT_OPEN_INCLUDED == TRUE) /* START_SLSI [S14111806] */
+                                                         ,tNFA_PROTOCOL_MASK protocols_sub_state[3]
+#endif
+);
 
 /*******************************************************************************
 **
@@ -367,7 +381,8 @@ NFC_API extern tNFA_STATUS NFA_EeSetDefaultProtoRouting (tNFA_HANDLE         ee_
 NFC_API extern tNFA_STATUS NFA_EeAddAidRouting (tNFA_HANDLE          ee_handle,
                                                 UINT8                aid_len,
                                                 UINT8               *p_aid,
-                                                tNFA_EE_PWR_STATE    power_state);
+                                                tNFA_EE_PWR_STATE     power_state
+);
 
 /*******************************************************************************
 **
@@ -474,10 +489,34 @@ NFC_API extern tNFA_STATUS NFA_EeSendData (tNFA_HANDLE  ee_handle,
 *******************************************************************************/
 NFC_API extern tNFA_STATUS NFA_EeDisconnect (tNFA_HANDLE ee_handle);
 
+#if (NFC_SEC_NOT_OPEN_INCLUDED == TRUE) /* START_SLSI [S14121101] */
+/*******************************************************************************
+**
+** Function         NFA_GetRemainingAidTableSize
+**
+** Description      This function is called to get the AID routing table size.
+**
+** Returns          AID routing table currently used size.
+**
+*******************************************************************************/
+NFC_API extern int NFA_GetRemainingAidTableSize();
+#endif
+
+#if (NFC_SEC_NOT_OPEN_INCLUDED == TRUE) /* START_SLSI [S141212201] */
+/*******************************************************************************
+**
+** Function         NFA_GetAidTableSize
+**
+** Description      This function is called to get the AID routing table max size.
+**
+** Returns          AID routing table currently used size.
+**
+*******************************************************************************/
+NFC_API extern UINT16 NFA_GetAidTableSize();
+#endif
 
 #ifdef __cplusplus
 }
 #endif
 
 #endif /* NFA_EE_API_H */
-

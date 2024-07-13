@@ -1003,6 +1003,9 @@ BOOLEAN nfa_p2p_create_data_link_connection (tNFA_P2P_MSG *p_msg)
         evt_data.disc.handle = (NFA_HANDLE_GROUP_P2P | local_sap);
         evt_data.disc.reason = NFA_P2P_DISC_REASON_NO_INFORMATION;
 
+#if (NFC_SEC_NOT_OPEN_INCLUDED == TRUE) /* START_SLSI [S15112001] */
+        evt_data.disc.reason = status;
+#endif
         nfa_p2p_cb.sap_cb[local_sap].p_cback (NFA_P2P_DISC_EVT, &evt_data);
     }
 
@@ -1229,6 +1232,7 @@ BOOLEAN nfa_p2p_set_llcp_cfg (tNFA_P2P_MSG *p_msg)
 *******************************************************************************/
 BOOLEAN nfa_p2p_restart_rf_discovery (tNFA_P2P_MSG *p_msg)
 {
+    (void)p_msg;
     P2P_TRACE_DEBUG0 ("nfa_p2p_restart_rf_discovery ()");
 
     nfa_dm_rf_deactivate (NFA_DEACTIVATE_TYPE_IDLE);

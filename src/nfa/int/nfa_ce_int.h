@@ -16,7 +16,6 @@
  *
  ******************************************************************************/
 
-
 /******************************************************************************
  *
  *  This is the private interface file for NFA_CE
@@ -138,7 +137,6 @@ typedef union
 #define NFA_CE_LISTEN_INFO_FELICA           0x00000200  /* This is a listen_info for non-NDEF Felica                        */
 #define NFA_CE_LISTEN_INFO_UICC             0x00000400  /* This is a listen_info for UICC                                   */
 
-
 /* Structure for listen look up table */
 typedef struct
 {
@@ -213,4 +211,3 @@ void nfa_ce_sys_disable (void);
 void nfa_ce_free_scratch_buf (void);
 BOOLEAN nfa_ce_restart_listen_check (void);
 #endif /* NFA_DM_INT_H */
-

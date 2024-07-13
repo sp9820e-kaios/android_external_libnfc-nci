@@ -16,7 +16,6 @@
  *
  ******************************************************************************/
 
-
 /******************************************************************************
  *
  *  This file contains the Near Field Communication (NFC) API function
@@ -31,7 +30,7 @@
 #include "nci_defs.h"
 #include "nfc_hal_api.h"
 #include "gki.h"
-
+#include "vendor_cfg.h"
 /* NFC application return status codes */
 #define NFC_STATUS_OK                   NCI_STATUS_OK                   /* Command succeeded    */
 #define NFC_STATUS_REJECTED             NCI_STATUS_REJECTED             /* Command is rejected. */
@@ -73,8 +72,6 @@
 #define NFC_STATUS_CONGESTED            0xFF                      /* congested                  */
 typedef UINT8 tNFC_STATUS;
 
-
-
 /**********************************************
  * NFC Config Parameter IDs defined by NCI
  **********************************************/
@@ -85,6 +82,7 @@ typedef UINT8 tNFC_STATUS;
 #define NFC_PMID_PB_BAILOUT         NCI_PARAM_ID_PB_BAILOUT
 #define NFC_PMID_PB_ATTRIB_PARAM1   NCI_PARAM_ID_PB_ATTRIB_PARAM1
 #define NFC_PMID_PF_BIT_RATE        NCI_PARAM_ID_PF_BIT_RATE
+#define NFC_PMID_PF_RC              NCI_PARAM_ID_PF_RC
 #define NFC_PMID_PB_H_INFO          NCI_PARAM_ID_PB_H_INFO
 #define NFC_PMID_BITR_NFC_DEP       NCI_PARAM_ID_BITR_NFC_DEP
 #define NFC_PMID_ATR_REQ_GEN_BYTES  NCI_PARAM_ID_ATR_REQ_GEN_BYTES
@@ -182,8 +180,7 @@ enum
     NFC_NFCC_TIMEOUT_REVT,                  /* 15 NFCC is not responding        */
     NFC_NFCC_TRANSPORT_ERR_REVT,            /* 16 NCI Tranport error            */
     NFC_NFCC_POWER_OFF_REVT,                /* 17 NFCC turned off               */
-
-    NFC_FIRST_VS_REVT                       /* First vendor-specific rsp event  */
+    NFC_FIRST_VS_REVT,                       /* First vendor-specific rsp event  */
 };
 typedef UINT16 tNFC_RESPONSE_EVT;
 
@@ -200,7 +197,7 @@ typedef UINT16 tNFC_CONN_EVT;
 
 #define NFC_NFCC_INFO_LEN       4
 #ifndef NFC_NFCC_MAX_NUM_VS_INTERFACE
-#define NFC_NFCC_MAX_NUM_VS_INTERFACE   4
+#define NFC_NFCC_MAX_NUM_VS_INTERFACE   5
 #endif
 typedef struct
 {
@@ -232,6 +229,17 @@ typedef struct
     UINT16                  tlv_size;       /* The length of TLV    */
     UINT8                   *p_param_tlvs;  /* TLV                  */
 } tNFC_GET_CONFIG_REVT;
+
+#if (NFC_SEC_NOT_OPEN_INCLUDED == TRUE) /* START_SLSI [S14111902] */
+typedef struct
+{
+    UINT8           major_version;      /* Major Version  */
+    UINT8           minor_version;      /* Minor Version */
+    UINT16          build_info_high;    /* Build Info High Version  */
+    UINT16          build_info_low;     /* Build Info Low Version  */
+} tNFC_FW_VERSION;
+#endif
+
 
 /* the data type associated with NFC_NFCEE_DISCOVER_REVT */
 typedef struct
@@ -289,13 +297,14 @@ typedef struct
 #define NFC_MAX_AID_LEN     NCI_MAX_AID_LEN     /* 16 */
 
 /* the data type associated with NFC_CE_GET_ROUTING_REVT */
+
 typedef struct
 {
     tNFC_STATUS             status;         /* The event status                 */
     UINT8                   nfcee_id;       /* NFCEE ID                         */
     UINT8                   num_tlvs;       /* number of TLVs                   */
     UINT8                   tlv_size;       /* the total len of all TLVs        */
-    UINT8                   param_tlvs[NFC_MAX_EE_TLV_SIZE];/* the TLVs         */
+    UINT8                   param_tlvs[NFC_MAX_EE_TLV_SIZE];/* the TLVs*/
 } tNFC_GET_ROUTING_REVT;
 
 
@@ -342,6 +351,11 @@ typedef UINT8 tNFC_RF_TECH;
 #define NFC_PROTOCOL_T3T        NCI_PROTOCOL_T3T      /* Type3Tag    - NFC-F            */
 #define NFC_PROTOCOL_ISO_DEP    NCI_PROTOCOL_ISO_DEP  /* Type 4A,4B  - NFC-A or NFC-B   */
 #define NFC_PROTOCOL_NFC_DEP    NCI_PROTOCOL_NFC_DEP  /* NFCDEP/LLCP - NFC-A or NFC-F       */
+#define NFC_PROTOCOL_MIFARE     NCI_PROTOCOL_MIFARE
+#if (NFC_SEC_NOT_OPEN_INCLUDED == TRUE) /* START_SLSI [S14111802-1] */
+#define NFC_PROTOCOL_CLT        NCI_PROTOCOL_CLT
+#define NFC_PROTOCOL_ISO7816    NCI_PROTOCOL_ISO7816 /*ISO7816 -AID default Routing */
+#endif
 #define NFC_PROTOCOL_B_PRIME    NCI_PROTOCOL_B_PRIME
 #define NFC_PROTOCOL_15693      NCI_PROTOCOL_15693
 #define NFC_PROTOCOL_KOVIO      NCI_PROTOCOL_KOVIO
@@ -391,6 +405,7 @@ typedef UINT8 tNFC_BIT_RATE;
 #define NFC_INTERFACE_LLCP_LOW      NCI_INTERFACE_LLCP_LOW
 #define NFC_INTERFACE_LLCP_HIGH     NCI_INTERFACE_LLCP_HIGH
 #define NFC_INTERFACE_VS_T2T_CE     NCI_INTERFACE_VS_T2T_CE
+#define NFC_INTERFACE_MIFARE        NCI_INTERFACE_VS_MIFARE
 typedef tNCI_INTF_TYPE tNFC_INTF_TYPE;
 
 /**********************************************
@@ -588,11 +603,11 @@ typedef struct
 /* the data type associated with NFC_RESULT_DEVT */
 typedef struct
 {
-    tNFC_STATUS             status;         /* The event status - place holder. */
-    UINT8                   rf_disc_id;     /* RF Discovery ID                  */
-    UINT8                   protocol;       /* supported protocol               */
-    tNFC_RF_TECH_PARAMS     rf_tech_param;  /* RF technology parameters         */
-    BOOLEAN                 more;           /* 0: last notification             */
+    tNFC_STATUS             status;         /* The event status - place holder.  */
+    UINT8                   rf_disc_id;     /* RF Discovery ID                   */
+    UINT8                   protocol;       /* supported protocol                */
+    tNFC_RF_TECH_PARAMS     rf_tech_param;  /* RF technology parameters          */
+    UINT8                   more;           /* 0: last, 1: last (limit), 2: more */
 } tNFC_RESULT_DEVT;
 
 /* the data type associated with NFC_SELECT_DEVT */
@@ -669,7 +684,7 @@ typedef struct
 #ifndef NFC_MAX_RAW_PARAMS
 #define NFC_MAX_RAW_PARAMS      16
 #endif
-#define NFC_MAX_RAW_PARAMS       16
+#define NFC_MAX_RAW_PARAMS      16
 typedef struct
 {
     UINT8       param_len;
@@ -817,8 +832,6 @@ typedef void (tNFC_CONN_CBACK) (UINT8 conn_id, tNFC_CONN_EVT event, tNFC_CONN *p
 #define NFC_ILLEGAL_CONN_ID            0xFF
 #define NFC_RF_CONN_ID                 0    /* the static connection ID for RF traffic */
 
-
-
 /*************************************
 **  Status callback function
 **************************************/
@@ -961,6 +974,7 @@ NFC_API extern tNFC_STATUS NFC_NfceeDiscover (BOOLEAN discover);
 *******************************************************************************/
 NFC_API extern tNFC_STATUS NFC_NfceeModeSet (UINT8              nfcee_id,
                                              tNFC_NFCEE_MODE    mode);
+
 /*******************************************************************************
 **
 ** Function         NFC_DiscoveryMap
@@ -1282,6 +1296,33 @@ NFC_API extern UINT8 NFC_SetTraceLevel (UINT8 new_level);
 **
 *******************************************************************************/
 NFC_API extern char * NFC_GetStatusName (tNFC_STATUS status);
+#endif
+
+
+#if (NFC_SEC_NOT_OPEN_INCLUDED == TRUE) /* START_SLSI [S14111810] */
+/*******************************************************************************
+**
+** Function         NFC_getAIDTableSize
+**
+** Description      This function return AIDTableSize.
+**
+** Returns          AID table size.
+**
+*******************************************************************************/
+NFC_API extern UINT16 NFC_getAIDTableSize();
+#endif
+
+#if (NFC_SEC_NOT_OPEN_INCLUDED == TRUE) /* START_SLSI [S14111902] */
+/*******************************************************************************
+**
+** Function         NFC_getFWVersion
+**
+** Description      This function return F/W version of S.LSI NFC.
+**
+** Returns          NFC_FW_VERSION struct value.
+**
+*******************************************************************************/
+NFC_API extern tNFC_FW_VERSION NFC_getFWVersion();
 #endif
 
 #ifdef __cplusplus

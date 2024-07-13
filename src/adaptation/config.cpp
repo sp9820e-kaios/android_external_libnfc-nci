@@ -22,12 +22,23 @@
 #include <vector>
 #include <list>
 
+#undef LOG_TAG
 #define LOG_TAG "NfcAdaptation"
+
+#if (NFC_SEC_NOT_OPEN_INCLUDED == TRUE)
+#include <cutils/properties.h>
+#endif
 
 const char transport_config_path[] = "/etc/";
 
+#if (NFC_SEC_NOT_OPEN_INCLUDED == TRUE) /* START_SLSI [S14111801] */
+#define config_name             "libnfc-sec.conf"
+#define extra_config_base       "libnfc-sec-"
+#else
 #define config_name             "libnfc-brcm.conf"
 #define extra_config_base       "libnfc-brcm-"
+#endif
+
 #define extra_config_ext        ".conf"
 #define     IsStringValue       0x80000000
 
@@ -90,6 +101,9 @@ inline bool isPrintable(char c)
     return  (c >= 'A' && c <= 'Z') ||
             (c >= 'a' && c <= 'z') ||
             (c >= '0' && c <= '9') ||
+#if (NFC_SEC_NOT_OPEN_INCLUDED == TRUE)
+            (c == '+') ||
+#endif
             c == '/' || c == '_' || c == '-' || c == '.';
 }
 
@@ -748,4 +762,3 @@ void readOptionalConfig(const char* extra)
     strPath += extra_config_ext;
     CNfcConfig::GetInstance().readConfig(strPath.c_str(), false);
 }
-

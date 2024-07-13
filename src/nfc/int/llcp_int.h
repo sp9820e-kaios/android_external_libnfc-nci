@@ -98,7 +98,6 @@ typedef struct
     UINT16              symm_delay;             /* Delay SYMM response                          */
     UINT16              data_link_timeout;      /* data link conneciton timeout                 */
     UINT16              delay_first_pdu_timeout;/* delay timeout to send first PDU as initiator */
-
 } tLLCP_LCB;
 
 /*

@@ -34,7 +34,6 @@
 #include "bt_trace.h"
 #endif
 
-
 /* API macros for DLL (needed to export API functions from DLLs) */
 #define NFC_API         EXPORT_API
 #define LLCP_API        EXPORT_API
@@ -186,6 +185,12 @@
 #define NFC_BRCM_VS_INCLUDED    TRUE
 #endif
 
+/* Define to TRUE to include not openned LSI Vendor Specific implementation */
+#ifndef NFC_SEC_NOT_OPEN_INCLUDED /* START_SLSI [S14111802] */
+#define NFC_SEC_NOT_OPEN_INCLUDED  FALSE
+#else
+#define NFC_SEC_NOT_OPEN_INCLUDED  TRUE
+#endif
 /* Define to TRUE if compling for NFC Reader/Writer Only mode */
 #ifndef NFC_RW_ONLY
 #define NFC_RW_ONLY         FALSE
@@ -250,7 +255,12 @@
 
 /* Maximum time to discover NFCEE */
 #ifndef NFA_EE_DISCV_TIMEOUT_VAL
-#define NFA_EE_DISCV_TIMEOUT_VAL    2000
+#if (NFC_SEC_NOT_OPEN_INCLUDED == TRUE) /* START_SLSI [S14111808] */
+#define NFA_EE_DISCV_TIMEOUT_VAL    500
+#define NFA_EE_DISCV_TIMEOUT_VAL_ADD    600
+#else
+#define NFA_EE_DISCV_TIMEOUT_VAL    4000
+#endif
 #endif
 
 /* Number of times reader/writer should attempt to resend a command on failure */
@@ -285,7 +295,7 @@
 
 /* RW Type 3 Tag timeout for each API call, in ms */
 #ifndef RW_T3T_TOUT_RESP
-#define RW_T3T_TOUT_RESP            100         /* NFC-Android will use 100 instead of 75 for T3t presence-check */
+#define RW_T3T_TOUT_RESP            500         /* increased T3t presence-check time from 100 to 500, as Felica Secure mode commands require longer time to process */
 #endif
 
 /* CE Type 3 Tag maximum response timeout index (for check and update, used in SENSF_RES) */
@@ -426,7 +436,9 @@
 
 /* Response Waiting Time */
 #ifndef LLCP_WAITING_TIME
-#define LLCP_WAITING_TIME           7       /* its scaled value should be less than LTO */
+#if (NFC_SEC_NOT_OPEN_INCLUDED == TRUE) /* START_SLSI [S17102401] */
+#define LLCP_WAITING_TIME           8       /* its scaled value should be less than LTO */
+#endif
 #endif
 
 /* Options Parameters */
@@ -595,7 +607,6 @@
 #ifndef NFA_CE_LISTEN_INFO_MAX
 #define NFA_CE_LISTEN_INFO_MAX        5
 #endif
-
 #ifndef NFA_CHO_INCLUDED
 #define NFA_CHO_INCLUDED            FALSE /* Anddroid must use FALSE to exclude CHO */
 #endif
@@ -658,15 +669,25 @@
 #define NFA_SNEP_RW                     2           /* Modified for NFC-A */
 #endif
 
-/* Max number of NFCEE supported */
-#ifndef NFA_EE_MAX_EE_SUPPORTED
 #define NFA_EE_MAX_EE_SUPPORTED         4           /* Modified for NFC-A until we add dynamic support */
-#endif
-
 /* Maximum number of AID entries per target_handle  */
 #ifndef NFA_EE_MAX_AID_ENTRIES
-#define NFA_EE_MAX_AID_ENTRIES      (32)
+#if (NFC_SEC_NOT_OPEN_INCLUDED == TRUE) /* START_SLSI [S14111802] */
+#define NFA_EE_MAX_AID_ENTRIES          (80)
+#else
+#define NFA_EE_MAX_AID_ENTRIES          (32)
 #endif
+#endif
+
+#if (NFC_SEC_NOT_OPEN_INCLUDED == TRUE) /* START_SLSI [S15062401] */
+#define NFA_EE_MAX_AID_CFG_LEN_OVER_LIMIT          (1000)
+#define NFA_EE_MAX_AID_CFG_LEN_UNDER_LIMIT          (900)
+#define NFA_EE_MAX_AID_CFG_LEN_N5P                  (450)
+#define NFA_EE_MAX_AID_CFG_LEN_N5                   (200)
+#define NFA_EE_MAX_AID_ENTRIES_N5P                  (50)
+#define NFA_EE_MAX_AID_ENTRIES_N5                   (22)
+#endif
+/* END_SLSI [S15062401] Adjust AID table size*/
 
 /* Maximum number of callback functions can be registered through NFA_EeRegister() */
 #ifndef NFA_EE_MAX_CBACKS
@@ -684,7 +705,6 @@
 *****************************************************************************/
 #ifndef HAL_WRITE
 #define HAL_WRITE(p)    {nfc_cb.p_hal->write(p->len, (UINT8 *)(p+1) + p->offset); GKI_freebuf(p);}
-
 #ifdef NFC_HAL_SHARED_GKI
 
 /* NFC HAL Included if NFC_NFCEE_INCLUDED */
@@ -708,6 +728,3 @@
 
 
 #endif /* NFC_TARGET_H */
-
-
-

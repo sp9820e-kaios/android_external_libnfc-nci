@@ -16,7 +16,6 @@
  *
  ******************************************************************************/
 
-
 /******************************************************************************
  *
  *  NFA interface for device management
@@ -29,7 +28,6 @@
 #include "nfa_ce_int.h"
 #include "nfa_sys_int.h"
 #include "ndef_utils.h"
-
 /*****************************************************************************
 **  Constants
 *****************************************************************************/
@@ -56,19 +54,18 @@ void NFA_Init(tHAL_NFC_ENTRY *p_hal_entry_tbl)
     NFA_TRACE_API0 ("NFA_Init ()");
     nfa_sys_init();
     nfa_dm_init();
-    nfa_p2p_init();
-    nfa_cho_init();
-    nfa_snep_init(FALSE);
-    nfa_rw_init();
-    nfa_ce_init();
-    nfa_ee_init();
-    if (nfa_ee_max_ee_cfg != 0)
-    {
-        nfa_dm_cb.get_max_ee    = p_hal_entry_tbl->get_max_ee;
-        nfa_hci_init();
-    }
+        nfa_p2p_init();
+        nfa_cho_init();
+        nfa_snep_init(FALSE);
+        nfa_rw_init();
+        nfa_ce_init();
+        nfa_ee_init();
+        if (nfa_ee_max_ee_cfg != 0)
+        {
+            nfa_dm_cb.get_max_ee    = p_hal_entry_tbl->get_max_ee;
 
-
+            nfa_hci_init();
+        }
     /* Initialize NFC module */
     NFC_Init (p_hal_entry_tbl);
 }
@@ -221,10 +218,7 @@ tNFA_STATUS NFA_GetConfig (UINT8 num_ids,
                            tNFA_PMID *p_param_ids)
 {
     tNFA_DM_API_GET_CONFIG *p_msg;
-
     NFA_TRACE_API1 ("NFA_GetConfig (): num_ids: %i", num_ids);
-
-
     if ((p_msg = (tNFA_DM_API_GET_CONFIG *) GKI_getbuf ((UINT16) (sizeof (tNFA_DM_API_GET_CONFIG) + num_ids))) != NULL)
     {
         p_msg->hdr.event = NFA_DM_API_GET_CONFIG_EVT;
@@ -865,7 +859,7 @@ tNFA_STATUS NFA_SendRawFrame (UINT8  *p_raw_data,
     NFA_TRACE_API1 ("NFA_SendRawFrame () data_len:%d", data_len);
 
     /* Validate parameters */
-    if ((data_len == 0) || (p_raw_data == NULL))
+         if ((data_len == 0) || (p_raw_data == NULL))
         return (NFA_STATUS_INVALID_PARAM);
 
     size = BT_HDR_SIZE + NCI_MSG_OFFSET_SIZE + NCI_DATA_HDR_SIZE + data_len;
@@ -877,7 +871,7 @@ tNFA_STATUS NFA_SendRawFrame (UINT8  *p_raw_data,
         p_msg->len    = data_len;
 
         p = (UINT8 *) (p_msg + 1) + p_msg->offset;
-        memcpy (p, p_raw_data, data_len);
+         memcpy (p, p_raw_data, data_len);
 
         nfa_sys_sendmsg (p_msg);
 
@@ -1202,4 +1196,3 @@ UINT8 NFA_SetTraceLevel (UINT8 new_level)
 
     return (nfa_sys_cb.trace_level);
 }
-

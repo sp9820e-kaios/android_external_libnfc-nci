@@ -16,7 +16,6 @@
  *
  ******************************************************************************/
 
-
 /******************************************************************************
  *
  *  This file contains the implementation for Type 3 tag in Reader/Writer
@@ -313,6 +312,7 @@ void rw_t3t_process_error (tNFC_STATUS status)
 *******************************************************************************/
 void rw_t3t_start_poll_timer (tRW_T3T_CB *p_cb)
 {
+    RW_TRACE_DEBUG1 ("%s: starting t3t poll timer", __func__);
     nfc_start_quick_timer (&p_cb->poll_timer, NFC_TTYPE_RW_T3T_RESPONSE, RW_T3T_POLL_CMD_TIMEOUT_TICKS);
 }
 
@@ -409,8 +409,6 @@ void rw_t3t_handle_get_system_codes_cplt (void)
 
     p_cb->rw_state = RW_T3T_STATE_IDLE;
     (*(rw_cb.p_cback)) (RW_T3T_GET_SYSTEM_CODES_EVT, &evt_data);
-
-
 }
 
 /*******************************************************************************
@@ -1071,7 +1069,11 @@ void rw_t3t_message_set_block_list (tRW_T3T_CB *p_cb, UINT8 **p, UINT8 num_block
         }
 
         /* Add decriptor to T3T message */
+#if (NFC_SEC_NOT_OPEN_INCLUDED == TRUE)/* START_SLSI [S14111903] */
+        if (p_t3t_blocks[i].block_number > 0xFF || p_t3t_blocks[i].block_extend > 0)
+#else
         if (p_t3t_blocks[i].block_number > 0xFF)
+#endif
         {
             UINT8_TO_STREAM ((*p), service_code_idx);
             UINT16_TO_STREAM ((*p), p_t3t_blocks[i].block_number);
@@ -1365,7 +1367,7 @@ void rw_t3t_act_handle_ndef_detect_rsp (tRW_T3T_CB *p_cb, BT_HDR *p_msg_rsp)
     p_cb->rw_state = RW_T3T_STATE_IDLE;
     rw_t3t_update_ndef_flag (&evt_data.flags);
     /* Notify app of NDEF detection result */
-    (*(rw_cb.p_cback)) (RW_T3T_NDEF_DETECT_EVT, (tRW_DATA *) &evt_data);
+    (*(rw_cb.p_cback)) (RW_T3T_NDEF_DETECT_EVT, (void *) &evt_data);
 
     GKI_freebuf (p_msg_rsp);
 }
@@ -1406,13 +1408,13 @@ void rw_t3t_act_handle_check_rsp (tRW_T3T_CB *p_cb, BT_HDR *p_msg_rsp)
         p_msg_rsp->len -= T3T_MSG_RSP_OFFSET_CHECK_DATA;
         evt_data.status = NFC_STATUS_OK;
         evt_data.p_data = p_msg_rsp;
-        (*(rw_cb.p_cback)) (RW_T3T_CHECK_EVT, (tRW_DATA *) &evt_data);
+        (*(rw_cb.p_cback)) (RW_T3T_CHECK_EVT, (void *) &evt_data);
     }
 
 
     p_cb->rw_state = RW_T3T_STATE_IDLE;
 
-    (*(rw_cb.p_cback)) (RW_T3T_CHECK_CPLT_EVT, (tRW_DATA *) &nfc_status);
+    (*(rw_cb.p_cback)) (RW_T3T_CHECK_CPLT_EVT, (void *) &nfc_status);
 }
 
 /*****************************************************************************
@@ -1448,7 +1450,7 @@ void rw_t3t_act_handle_update_rsp (tRW_T3T_CB *p_cb, BT_HDR *p_msg_rsp)
 
     p_cb->rw_state = RW_T3T_STATE_IDLE;
 
-    (*(rw_cb.p_cback)) (RW_T3T_UPDATE_CPLT_EVT, (tRW_DATA *)&evt_data);
+    (*(rw_cb.p_cback)) (RW_T3T_UPDATE_CPLT_EVT, (void *)&evt_data);
 
     GKI_freebuf (p_msg_rsp);
 }
@@ -1479,7 +1481,7 @@ void rw_t3t_act_handle_raw_senddata_rsp (tRW_T3T_CB *p_cb, tNFC_DATA_CEVT *p_dat
 
     p_cb->rw_state = RW_T3T_STATE_IDLE;
 
-    (*(rw_cb.p_cback)) (RW_T3T_RAW_FRAME_EVT, (tRW_DATA *) &evt_data);
+    (*(rw_cb.p_cback)) (RW_T3T_RAW_FRAME_EVT, (void *) &evt_data);
 }
 
 /*****************************************************************************
@@ -1541,7 +1543,7 @@ void rw_t3t_act_handle_check_ndef_rsp (tRW_T3T_CB *p_cb, BT_HDR *p_msg_rsp)
 
             p_msg_rsp->len = rsp_num_bytes_rx;
             read_data.p_data = p_msg_rsp;
-            (*(rw_cb.p_cback)) (RW_T3T_CHECK_EVT, (tRW_DATA *) &read_data);
+            (*(rw_cb.p_cback)) (RW_T3T_CHECK_EVT, (void *) &read_data);
 
             /* Send CHECK cmd for next NDEF segment, if needed */
             if (!(p_cb->flags & RW_T3T_FL_IS_FINAL_NDEF_SEGMENT))
@@ -1663,7 +1665,11 @@ static void rw_t3t_handle_get_sc_poll_rsp (tRW_T3T_CB *p_cb, UINT8 nci_status, U
             BE_STREAM_TO_UINT16 (sc, p);
 
             /* Handle felica lite */
+#if (NFC_SEC_NOT_OPEN_INCLUDED == TRUE) /* START_SLSI [S15052704] */
+            if ((sc == T3T_SYSTEM_CODE_FELICA_LITE) || (sc == T3T_SYSTEM_CODE_NDEF))
+#else
             if (sc == T3T_SYSTEM_CODE_FELICA_LITE)
+#endif
             {
                 RW_TRACE_DEBUG1 ("FeliCa Lite tag detected (system code %04X)", sc);
                 /* Store system code */
@@ -1734,6 +1740,7 @@ static void rw_t3t_handle_ndef_detect_poll_rsp (tRW_T3T_CB *p_cb, UINT8 nci_stat
     BT_HDR *p_cmd_buf;
     UINT8 *p, *p_cmd_start;
     tRW_DATA evt_data;
+    (void)sensf_res_buf_size;
 
     /* Validate response for NDEF poll */
     if ((nci_status == NCI_STATUS_OK) && (num_responses > 0))
@@ -1897,6 +1904,8 @@ tNFC_STATUS rw_t3t_update_block (tRW_T3T_CB *p_cb, UINT8 block_id, UINT8 *p_bloc
 static void rw_t3t_handle_fmt_poll_rsp (tRW_T3T_CB *p_cb, UINT8 nci_status, UINT8 num_responses, UINT8 sensf_res_buf_size, UINT8 *p_sensf_res_buf)
 {
     tRW_DATA evt_data;
+    (void)sensf_res_buf_size;
+    (void)p_sensf_res_buf;
 
     evt_data.status = NFC_STATUS_OK;
 
@@ -2048,6 +2057,8 @@ static void rw_t3t_handle_sro_poll_rsp (tRW_T3T_CB *p_cb, UINT8 nci_status, UINT
     UINT8 tempU8;
     UINT16 checksum, i;
     UINT32 tempU32 = 0;
+    (void)sensf_res_buf_size;
+    (void)p_sensf_res_buf;
 
     evt_data.status = NFC_STATUS_OK;
 
@@ -2235,6 +2246,7 @@ void rw_t3t_data_cback (UINT8 conn_id, tNFC_DATA_CEVT *p_data)
     BT_HDR     *p_msg = p_data->p_data;
     BOOLEAN free_msg = FALSE;           /* if TRUE, free msg buffer before returning */
     UINT8 *p, sod;
+    (void)conn_id;
 
     /* Stop rsponse timer */
     nfc_stop_quick_timer (&p_cb->timer);
@@ -2363,11 +2375,19 @@ void rw_t3t_conn_cback (UINT8 conn_id, tNFC_CONN_EVT event, tNFC_CONN *p_data)
         break;
 
     case NFC_DATA_CEVT:     /* check for status in tNFC_CONN */
-        if (  (p_data->data.status == NFC_STATUS_OK)
-            ||(p_data->data.status == NFC_STATUS_CONTINUE)  )
+        if (  (p_data != NULL)
+            &&(  (p_data->data.status == NFC_STATUS_OK)
+               ||(p_data->data.status == NFC_STATUS_CONTINUE)  )  )
         {
             rw_t3t_data_cback (conn_id, &(p_data->data));
             break;
+        }
+        else if ((p_data != NULL) && (p_data->data.p_data != NULL))
+        {
+            RW_TRACE_DEBUG2 ("rw_t3t_conn_cback: p_data->data.p_data=0x%X p_data->data.status=0x%02x", p_data->data.p_data, p_data->data.status);
+            /* Free the response buffer in case of error response */
+            GKI_freebuf ((BT_HDR *) (p_data->data.p_data));
+            p_data->data.p_data = NULL;
         }
         /* Data event with error status...fall through to NFC_ERROR_CEVT case */
 
@@ -2469,6 +2489,7 @@ tNFC_STATUS rw_t3t_select (UINT8 peer_nfcid2[NCI_RF_F_UID_LEN], UINT8 mrti_check
 static tNFC_STATUS rw_t3t_unselect (UINT8 peer_nfcid2[])
 {
     tRW_T3T_CB *p_cb = &rw_cb.tcb.t3t;
+    (void)peer_nfcid2;
 
 #if (defined (RW_STATS_INCLUDED) && (RW_STATS_INCLUDED == TRUE))
     /* Display stats */

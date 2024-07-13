@@ -16,7 +16,6 @@
  *
  ******************************************************************************/
 
-
 /******************************************************************************
  *
  *  NFA interface for card emulation
@@ -47,7 +46,8 @@ tNFA_STATUS nfa_ce_api_deregister_listen (tNFA_HANDLE handle, UINT32 listen_info
     tNFA_CE_MSG      *p_ce_msg;
 
     /* Validate handle */
-    if (  (listen_info != NFA_CE_LISTEN_INFO_UICC)
+    if (  (listen_info != NFA_CE_LISTEN_INFO_UICC
+            )
         &&((handle & NFA_HANDLE_GROUP_MASK) != NFA_HANDLE_GROUP_CE)  )
     {
         NFA_TRACE_ERROR0 ("nfa_ce_api_reregister_listen: Invalid handle");
@@ -202,7 +202,7 @@ tNFA_STATUS NFA_CeConfigureUiccListenTech (tNFA_HANDLE ee_handle,
 #if (NFC_NFCEE_INCLUDED == TRUE)
     tNFA_CE_MSG *p_msg;
 
-    NFA_TRACE_API1 ("NFA_CeConfigureUiccListenTech () ee_handle = 0x%x", ee_handle);
+    NFA_TRACE_API2 ("NFA_CeConfigureUiccListenTech () ee_handle = 0x%x tech_mask = 0x%x", ee_handle, tech_mask);
 
     /* If tech_mask is zero, then app is disabling listening for specified uicc */
     if (tech_mask == 0)
@@ -423,4 +423,3 @@ tNFA_STATUS NFA_CeSetIsoDepListenTech (tNFA_TECHNOLOGY_MASK tech_mask)
 
     return (NFA_STATUS_FAILED);
 }
-

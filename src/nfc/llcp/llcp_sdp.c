@@ -16,7 +16,6 @@
  *
  ******************************************************************************/
 
-
 /******************************************************************************
  *
  *  This file contains the LLCP Service Discovery
@@ -43,6 +42,8 @@
 *******************************************************************************/
 void llcp_sdp_proc_data (tLLCP_SAP_CBACK_DATA *p_data)
 {
+    (void)p_data;
+
     /*
     ** Do nothing
     ** llcp_sdp_proc_SNL () is called by link layer
@@ -174,14 +175,12 @@ tLLCP_STATUS llcp_sdp_send_sdreq (UINT8 tid, char *p_name)
     {
         status = LLCP_STATUS_FAIL;
     }
-
     /* if LM is waiting for PDUs from upper layer */
     if (  (status == LLCP_STATUS_SUCCESS)
         &&(llcp_cb.lcb.symm_state == LLCP_LINK_SYMM_LOCAL_XMIT_NEXT)  )
     {
         llcp_link_check_send_data ();
     }
-
     return status;
 }
 
@@ -277,14 +276,12 @@ static tLLCP_STATUS llcp_sdp_send_sdres (UINT8 tid, UINT8 sap)
     {
         status = LLCP_STATUS_FAIL;
     }
-
     /* if LM is waiting for PDUs from upper layer */
     if (  (status == LLCP_STATUS_SUCCESS)
         &&(llcp_cb.lcb.symm_state == LLCP_LINK_SYMM_LOCAL_XMIT_NEXT)  )
     {
         llcp_link_check_send_data ();
     }
-
     return status;
 }
 

@@ -112,7 +112,6 @@ enum
     NFA_RW_OP_I93_LOCK_DSFID,
     NFA_RW_OP_I93_GET_SYS_INFO,
     NFA_RW_OP_I93_GET_MULTI_BLOCK_STATUS,
-
     NFA_RW_OP_MAX
 };
 typedef UINT8 tNFA_RW_OP;
@@ -351,4 +350,3 @@ extern void    nfa_rw_free_ndef_rx_buf (void);
 extern void    nfa_rw_sys_disable (void);
 
 #endif /* NFA_DM_INT_H */
-

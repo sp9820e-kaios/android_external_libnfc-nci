@@ -32,24 +32,24 @@
 #include "rw_int.h"
 #include "tags_int.h"
 
-#define T1T_MAX_NUM_OPCODES         9
-#define T1T_STATIC_OPCODES          5
-#define T1T_MAX_TAG_MODELS          2
+#define T1T_MAX_NUM_OPCODES     9
+#define T1T_STATIC_OPCODES      5
+#define T1T_MAX_TAG_MODELS      2
 
 const tT1T_CMD_RSP_INFO t1t_cmd_rsp_infos[] =
 {
     /* Note: the order of these commands can not be changed.
      * If new events are added, add them after T1T_CMD_WRITE_NE8 */
 /*   opcode         cmd_len,  uid_offset,  rsp_len */
-    {T1T_CMD_RID,       7,          3,      6},
-    {T1T_CMD_RALL,      7,          3,      122},
-    {T1T_CMD_READ,      7,          3,      2},
-    {T1T_CMD_WRITE_E,   7,          3,      2},
-    {T1T_CMD_WRITE_NE,  7,          3,      2},
-    {T1T_CMD_RSEG,      14,         10,     129},
-    {T1T_CMD_READ8,     14,         10,     9},
-    {T1T_CMD_WRITE_E8,  14,         10,     9},
-    {T1T_CMD_WRITE_NE8, 14,         10,     9}
+    {T1T_CMD_RID,       7,      3,      6},
+    {T1T_CMD_RALL,      7,      3,      122},
+    {T1T_CMD_READ,      7,      3,      2},
+    {T1T_CMD_WRITE_E,   7,      3,      2},
+    {T1T_CMD_WRITE_NE,  7,      3,      2},
+    {T1T_CMD_RSEG,      14,     10,     129},
+    {T1T_CMD_READ8,     14,     10,     9},
+    {T1T_CMD_WRITE_E8,  14,     10,     9},
+    {T1T_CMD_WRITE_NE8, 14,     10,     9}
 };
 
 const tT1T_INIT_TAG t1t_init_content[] =
@@ -67,9 +67,9 @@ const tT2T_CMD_RSP_INFO t2t_cmd_rsp_infos[] =
     /* Note: the order of these commands can not be changed.
      * If new events are added, add them after T2T_CMD_SEC_SEL */
 /*  opcode            cmd_len,   rsp_len, nack_rsp_len */
-    {T2T_CMD_READ,      2,          16,     1},
-    {T2T_CMD_WRITE,     6,          1,      1},
-    {T2T_CMD_SEC_SEL,   2,          1,      1}
+    {T2T_CMD_READ,      2,      16,     1},
+    {T2T_CMD_WRITE,     6,      1,      1},
+    {T2T_CMD_SEC_SEL,   2,      1,      1}
 };
 
 const tT2T_INIT_TAG t2t_init_content[] =
@@ -320,9 +320,9 @@ int tags_pow (int x, int y)
 static unsigned int tags_ones32 (register unsigned int x)
 {
         /* 32-bit recursive reduction using SWAR...
-	   but first step is mapping 2-bit values
-	   into sum of 2 1-bit values in sneaky way
-	*/
+       but first step is mapping 2-bit values
+       into sum of 2 1-bit values in sneaky way
+    */
         x -= ((x >> 1) & 0x55555555);
         x = (((x >> 2) & 0x33333333) + (x & 0x33333333));
         x = (((x >> 4) + x) & 0x0f0f0f0f);

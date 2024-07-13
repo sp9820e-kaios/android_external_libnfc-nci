@@ -16,7 +16,6 @@
  *
  ******************************************************************************/
 
-
 /******************************************************************************
  *
  *  NFA interface to NFCEE - API functions
@@ -124,6 +123,7 @@ tNFA_STATUS NFA_EeGetInfo(UINT8        *p_num_nfcee,
         p_info->ee_status       = p_cb->ee_status;
         p_info->num_interface   = p_cb->num_interface;
         p_info->num_tlvs        = p_cb->num_tlvs;
+
         memcpy(p_info->ee_interface, p_cb->ee_interface, p_cb->num_interface);
         memcpy(p_info->ee_tlv, p_cb->ee_tlv, p_cb->num_tlvs * sizeof(tNFA_EE_TLV));
         p_info++;
@@ -293,15 +293,23 @@ tNFA_STATUS NFA_EeModeSet(tNFA_HANDLE    ee_handle,
 tNFA_STATUS NFA_EeSetDefaultTechRouting(tNFA_HANDLE          ee_handle,
                                         tNFA_TECHNOLOGY_MASK technologies_switch_on,
                                         tNFA_TECHNOLOGY_MASK technologies_switch_off,
-                                        tNFA_TECHNOLOGY_MASK technologies_battery_off)
+                                        tNFA_TECHNOLOGY_MASK technologies_battery_off
+#if (NFC_SEC_NOT_OPEN_INCLUDED == TRUE) /* START_SLSI [S14111806] */
+                                        ,tNFA_TECHNOLOGY_MASK technologies_sub_state[3]
+#endif
+)
 {
     tNFA_EE_API_SET_TECH_CFG *p_msg;
     tNFA_STATUS status = NFA_STATUS_FAILED;
     UINT8       nfcee_id = (UINT8)(ee_handle & 0xFF);
     tNFA_EE_ECB *p_cb;
-
     NFA_TRACE_API4 ("NFA_EeSetDefaultTechRouting(): handle:<0x%x>technology_mask:<0x%x>/<0x%x>/<0x%x>",
         ee_handle, technologies_switch_on, technologies_switch_off, technologies_battery_off);
+#if (NFC_SEC_NOT_OPEN_INCLUDED == TRUE) /* START_SLSI [S14111806] */
+    NFA_TRACE_API4 ("NFA_EeSetDefaultTechRouting(): handle:<0x%x>technology_mask2:<0x%x>/<0x%x>/<0x%x>",
+        ee_handle, technologies_sub_state[0], technologies_sub_state[1], technologies_sub_state[2]);
+#endif
+
     p_cb = nfa_ee_find_ecb (nfcee_id);
 
     if (p_cb == NULL)
@@ -317,7 +325,11 @@ tNFA_STATUS NFA_EeSetDefaultTechRouting(tNFA_HANDLE          ee_handle,
         p_msg->technologies_switch_on   = technologies_switch_on;
         p_msg->technologies_switch_off  = technologies_switch_off;
         p_msg->technologies_battery_off = technologies_battery_off;
-
+#if (NFC_SEC_NOT_OPEN_INCLUDED == TRUE) /* START_SLSI [S14111806] */
+        p_msg->technologies_sub_state[0] = technologies_sub_state[0];
+        p_msg->technologies_sub_state[1] = technologies_sub_state[1];
+        p_msg->technologies_sub_state[2] = technologies_sub_state[2];
+#endif
         nfa_sys_sendmsg (p_msg);
 
         status = NFA_STATUS_OK;
@@ -349,7 +361,11 @@ tNFA_STATUS NFA_EeSetDefaultTechRouting(tNFA_HANDLE          ee_handle,
 tNFA_STATUS NFA_EeSetDefaultProtoRouting(tNFA_HANDLE         ee_handle,
                                          tNFA_PROTOCOL_MASK  protocols_switch_on,
                                          tNFA_PROTOCOL_MASK  protocols_switch_off,
-                                         tNFA_PROTOCOL_MASK  protocols_battery_off)
+                                         tNFA_PROTOCOL_MASK  protocols_battery_off
+#if (NFC_SEC_NOT_OPEN_INCLUDED == TRUE) /* START_SLSI [S14111806] */
+                                         ,tNFA_PROTOCOL_MASK protocols_sub_state[3]
+#endif
+)
 {
     tNFA_EE_API_SET_PROTO_CFG *p_msg;
     tNFA_STATUS status = NFA_STATUS_FAILED;
@@ -358,6 +374,10 @@ tNFA_STATUS NFA_EeSetDefaultProtoRouting(tNFA_HANDLE         ee_handle,
 
     NFA_TRACE_API4 ("NFA_EeSetDefaultProtoRouting(): handle:<0x%x>protocol_mask:<0x%x>/<0x%x>/<0x%x>",
         ee_handle, protocols_switch_on, protocols_switch_off, protocols_battery_off);
+#if (NFC_SEC_NOT_OPEN_INCLUDED == TRUE) /* START_SLSI [S14111806] */
+    NFA_TRACE_API4 ("NFA_EeSetDefaultProtoRouting(): handle:<0x%x>protocol_mask2:<0x%x>/<0x%x>/<0x%x>",
+        ee_handle, protocols_sub_state[0], protocols_sub_state[1], protocols_sub_state[2]);
+#endif
     p_cb = nfa_ee_find_ecb (nfcee_id);
 
     if (p_cb == NULL)
@@ -373,7 +393,11 @@ tNFA_STATUS NFA_EeSetDefaultProtoRouting(tNFA_HANDLE         ee_handle,
         p_msg->protocols_switch_on      = protocols_switch_on;
         p_msg->protocols_switch_off     = protocols_switch_off;
         p_msg->protocols_battery_off    = protocols_battery_off;
-
+#if (NFC_SEC_NOT_OPEN_INCLUDED == TRUE) /* START_SLSI [S14111806] */
+        p_msg->protocols_sub_state[0] = protocols_sub_state[0];
+        p_msg->protocols_sub_state[1] = protocols_sub_state[1];
+        p_msg->protocols_sub_state[2] = protocols_sub_state[2];
+#endif
         nfa_sys_sendmsg (p_msg);
 
         status = NFA_STATUS_OK;
@@ -439,7 +463,6 @@ tNFA_STATUS NFA_EeAddAidRouting(tNFA_HANDLE          ee_handle,
 
     return status;
 }
-
 
 /*******************************************************************************
 **
@@ -693,3 +716,63 @@ tNFA_STATUS NFA_EeDisconnect(tNFA_HANDLE ee_handle)
 
     return status;
 }
+
+#if (NFC_SEC_NOT_OPEN_INCLUDED == TRUE) /* START_SLSI [S14121101] */
+/*******************************************************************************
+**
+** Function         NFA_GetRemainingAidTableSize
+**
+** Description      This function is called to get the AID routing table size.
+**
+** Returns          AID routing table currently used size.
+**
+*******************************************************************************/
+int NFA_GetRemainingAidTableSize()
+{
+    int remaining_aid_table_size = 0;
+/* START_SLSI [S15062401] */
+    int useable_aid_table_size = 0;
+
+    if(NFC_GetLmrtSize() > NFA_EE_MAX_AID_CFG_LEN_OVER_LIMIT)
+        useable_aid_table_size = NFA_EE_MAX_AID_CFG_LEN;
+    else if(NFC_GetLmrtSize() > NFA_EE_MAX_AID_CFG_LEN_UNDER_LIMIT)
+        useable_aid_table_size = NFA_EE_MAX_AID_CFG_LEN_N5P;
+    else
+        useable_aid_table_size = NFA_EE_MAX_AID_CFG_LEN_N5;
+
+    remaining_aid_table_size = useable_aid_table_size - nfa_all_ee_find_total_aid_len();
+/* END_SLSI [S15062401] */
+    NFA_TRACE_API1 ("NFA_GetRemainingAidTableSize(): %d", remaining_aid_table_size);
+
+    return remaining_aid_table_size;
+}
+#endif
+
+#if (NFC_SEC_NOT_OPEN_INCLUDED == TRUE) /* START_SLSI [S14121201] */
+/*******************************************************************************
+**
+** Function         NFA_GetAidTableSize
+**
+** Description      This function is called to get the AID routing table max size.
+**
+** Returns          AID routing table currently used size.
+**
+*******************************************************************************/
+UINT16 NFA_GetAidTableSize()
+{
+/* START_SLSI [S15062401] */
+    // Notify NFC Service of useable AID size
+    if(NFC_GetLmrtSize() > NFA_EE_MAX_AID_CFG_LEN_OVER_LIMIT)
+    {
+        return NFA_EE_MAX_AID_CFG_LEN;
+    }
+    else if(NFC_GetLmrtSize() > NFA_EE_MAX_AID_CFG_LEN_UNDER_LIMIT)
+    {
+        return NFA_EE_MAX_AID_CFG_LEN_N5P;
+    }
+    else
+    {
+        return NFA_EE_MAX_AID_CFG_LEN_N5;
+    }
+}
+#endif

@@ -169,6 +169,7 @@ void nci_proc_rf_management_rsp (BT_HDR *p_msg)
     switch (op_code)
     {
     case NCI_MSG_RF_DISCOVER:
+        nfa_dm_p2p_prio_logic (op_code, pp, NFA_DM_P2P_PRIO_RSP);
         nfc_ncif_rf_management_status (NFC_START_DEVT, *pp);
         break;
 
@@ -184,6 +185,10 @@ void nci_proc_rf_management_rsp (BT_HDR *p_msg)
         break;
 
     case NCI_MSG_RF_DEACTIVATE:
+        if (FALSE == nfa_dm_p2p_prio_logic (op_code, pp, NFA_DM_P2P_PRIO_RSP))
+        {
+            return;
+        }
         nfc_ncif_proc_deactivate (*pp, *p_old, FALSE);
         break;
 
@@ -238,10 +243,18 @@ void nci_proc_rf_management_ntf (BT_HDR *p_msg)
         break;
 
     case NCI_MSG_RF_DEACTIVATE:
+        if (FALSE == nfa_dm_p2p_prio_logic (op_code, pp, NFA_DM_P2P_PRIO_NTF))
+        {
+            return;
+        }
         nfc_ncif_proc_deactivate (NFC_STATUS_OK, *pp, TRUE);
         break;
 
     case NCI_MSG_RF_INTF_ACTIVATED:
+        if (FALSE == nfa_dm_p2p_prio_logic (op_code, pp, NFA_DM_P2P_PRIO_NTF))
+        {
+            return;
+        }
         nfc_ncif_proc_activate (pp, len);
         break;
 
@@ -294,9 +307,8 @@ void nci_proc_ee_management_rsp (BT_HDR *p_msg)
     UINT8   *pp, len, op_code;
     tNFC_RESPONSE_CBACK *p_cback = nfc_cb.p_resp_cback;
     tNFC_NFCEE_DISCOVER_REVT    nfcee_discover;
-    tNFC_NFCEE_INFO_REVT        nfcee_info;
     tNFC_NFCEE_MODE_SET_REVT    mode_set;
-    tNFC_RESPONSE   *p_evt = (tNFC_RESPONSE *) &nfcee_info;
+    void   *p_evt = NULL;
     tNFC_RESPONSE_EVT event = NFC_NFCEE_INFO_REVT;
     UINT8   *p_old = nfc_cb.last_cmd;
 
@@ -310,7 +322,7 @@ void nci_proc_ee_management_rsp (BT_HDR *p_msg)
     switch (op_code)
     {
     case NCI_MSG_NFCEE_DISCOVER:
-        p_evt                       = (tNFC_RESPONSE *) &nfcee_discover;
+        p_evt                       = (void *) &nfcee_discover;
         nfcee_discover.status       = *pp++;
         nfcee_discover.num_nfcee    = *pp++;
 
@@ -321,7 +333,7 @@ void nci_proc_ee_management_rsp (BT_HDR *p_msg)
         break;
 
     case NCI_MSG_NFCEE_MODE_SET:
-        p_evt                   = (tNFC_RESPONSE *) &mode_set;
+        p_evt                   = (void *) &mode_set;
         mode_set.status         = *pp;
         mode_set.nfcee_id       = 0;
         event                   = NFC_NFCEE_MODE_SET_REVT;
@@ -354,7 +366,7 @@ void nci_proc_ee_management_ntf (BT_HDR *p_msg)
     UINT8                 *pp, len, op_code;
     tNFC_RESPONSE_CBACK   *p_cback = nfc_cb.p_resp_cback;
     tNFC_NFCEE_INFO_REVT  nfcee_info;
-    tNFC_RESPONSE         *p_evt   = (tNFC_RESPONSE *) &nfcee_info;
+    void* p_evt   = (void*) &nfcee_info;
     tNFC_RESPONSE_EVT     event    = NFC_NFCEE_INFO_REVT;
     UINT8                 xx;
     UINT8                 yy;

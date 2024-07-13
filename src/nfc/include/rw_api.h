@@ -16,7 +16,6 @@
  *
  ******************************************************************************/
 
-
 /******************************************************************************
  *
  *  This file contains the Near Field Communication (NFC) Reader/Writer mode
@@ -102,6 +101,7 @@ enum
     RW_T4T_PRESENCE_CHECK_EVT,                  /* Response to RW_T4tPresenceCheck          */
     RW_T4T_RAW_FRAME_EVT,                       /* Response of raw frame sent               */
     RW_T4T_INTF_ERROR_EVT,                      /* RF Interface error event                 */
+    RW_T4T_NDEF_FORMAT_CPLT_EVT,                /* Format operation completed               */
     RW_T4T_MAX_EVT,
 
     /* ISO 15693 tag events for tRW_CBACK */
@@ -122,7 +122,6 @@ enum
     RW_I93_INTF_ERROR_EVT,                      /* RF Interface error event           */
     RW_I93_MAX_EVT
 };
-
 #define RW_RAW_FRAME_EVT     0xFF
 
 typedef UINT8 tRW_EVENT;
@@ -839,6 +838,22 @@ NFC_API extern tNFC_STATUS RW_T3tPresenceCheck (void);
 **
 *****************************************************************************/
 NFC_API extern tNFC_STATUS RW_T3tGetSystemCodes (void);
+
+/*****************************************************************************
+**
+** Function         RW_T4tFormatNDef
+**
+** Description
+**      Format a type-4 tag for NDEF.
+**
+**      Only Desifire tags are supported by this API. The
+**      RW_T4T_FORMAT_CPLT_EVT is used to notify the status of the operation.
+**
+** Returns
+**      NFC_STATUS_OK: if success
+**      NFC_STATUS_FAILED: other error
+*****************************************************************************/
+NFC_API extern tNFC_STATUS RW_T4tFormatNDef (void);
 
 /*******************************************************************************
 **

@@ -16,7 +16,6 @@
  *
  ******************************************************************************/
 
-
 /******************************************************************************
  *
  *  This file contains the definition from NCI specification
@@ -43,7 +42,11 @@ extern "C" {
 #define NCI_VSC_MSG_HDR_SIZE    12  /* NCI header (3) + callback function pointer(8; use 8 to be safe) + HCIT (1 byte) */
 #define NCI_TL_SIZE             2
 
+#if(NFC_SEC_NOT_OPEN_INCLUDED == TRUE) /* START_SLSI [S14111805] */
+#define NCI_ISO_DEP_MAX_INFO      254
+#else
 #define NCI_ISO_DEP_MAX_INFO      253   /* Max frame size (256) - Prologue (1) - Epilogue (2) in ISO-DEP, CID and NAD are not used*/
+#endif
 #define NCI_NFC_DEP_MAX_DATA      251   /* Max payload (254) - Protocol Header (3) in NFC-DEP, DID and NAD are not used */
 
 /* NCI Command and Notification Format:
@@ -177,7 +180,6 @@ extern "C" {
 #define NCI_STATUS_EE_PROTOCOL_ERR      0xC2
 #define NCI_STATUS_EE_TIMEOUT           0xC3
 
-
 typedef UINT8 tNCI_STATUS;
 
 /* RF Technologies */
@@ -223,7 +225,6 @@ typedef UINT8 tNCI_STATUS;
 #define NCI_MSG_RF_EE_ACTION            9
 #define NCI_MSG_RF_EE_DISCOVERY_REQ     10
 #define NCI_MSG_RF_PARAMETER_UPDATE     11
-
 /**********************************************
  * NFCEE MANAGEMENT Group Opcode - 2
  **********************************************/
@@ -240,7 +241,6 @@ typedef UINT8 tNCI_STATUS;
 #define NCI_CORE_PARAM_SIZE_RESET       0x01
 #define NCI_CORE_PARAM_SIZE_RESET_RSP   0x03
 #define NCI_CORE_PARAM_SIZE_RESET_NTF   0x02
-
 #define NCI_CORE_PARAM_SIZE_INIT        0x00 /* no payload */
 #define NCI_CORE_PARAM_SIZE_INIT_RSP    0x11
 #define NCI_CORE_INIT_RSP_OFFSET_NUM_INTF   0x05
@@ -369,6 +369,10 @@ typedef UINT8 tNCI_INTF_TYPE;
 #define NCI_DISCOVER_PARAM_SIZE_DEACT_NTF   0x01 /* type */
 
 /**********************************************
+ * NCI RF Management / PWR AND LINK CTRl Group Params
+ **********************************************/
+
+/**********************************************
  * Supported Protocols
  **********************************************/
 #define NCI_PROTOCOL_UNKNOWN            0x00
@@ -377,25 +381,12 @@ typedef UINT8 tNCI_INTF_TYPE;
 #define NCI_PROTOCOL_T3T                0x03
 #define NCI_PROTOCOL_ISO_DEP            0x04
 #define NCI_PROTOCOL_NFC_DEP            0x05
+#if (NFC_SEC_NOT_OPEN_INCLUDED == TRUE)
+#define NCI_PROTOCOL_ISO7816            0xA0
+#endif
 /**********************************************
  * Proprietary Protocols
  **********************************************/
-#ifndef NCI_PROTOCOL_18092_ACTIVE
-#define NCI_PROTOCOL_18092_ACTIVE       0x80
-#endif
-#ifndef NCI_PROTOCOL_B_PRIME
-#define NCI_PROTOCOL_B_PRIME            0x81
-#endif
-#ifndef NCI_PROTOCOL_DUAL
-#define NCI_PROTOCOL_DUAL               0x82
-#endif
-#ifndef NCI_PROTOCOL_15693
-#define NCI_PROTOCOL_15693              0x83
-#endif
-#ifndef NCI_PROTOCOL_KOVIO
-#define NCI_PROTOCOL_KOVIO              0x8a
-#endif
-
 
 /* Discovery Types/Detected Technology and Mode */
 #define NCI_DISCOVERY_TYPE_POLL_A               0x00
@@ -404,7 +395,6 @@ typedef UINT8 tNCI_INTF_TYPE;
 #define NCI_DISCOVERY_TYPE_POLL_A_ACTIVE        0x03
 #define NCI_DISCOVERY_TYPE_POLL_F_ACTIVE        0x05
 #define NCI_DISCOVERY_TYPE_POLL_B_PRIME         0x74
-#define NCI_DISCOVERY_TYPE_POLL_KOVIO           0x77
 #define NCI_DISCOVERY_TYPE_LISTEN_A             0x80
 #define NCI_DISCOVERY_TYPE_LISTEN_B             0x81
 #define NCI_DISCOVERY_TYPE_LISTEN_F             0x82
@@ -435,7 +425,11 @@ typedef UINT8 tNCI_DISCOVERY_TYPE;
 #define NCI_ROUTE_PWR_STATE_ON          0x01        /* The device is on */
 #define NCI_ROUTE_PWR_STATE_SWITCH_OFF  0x02        /* The device is switched off */
 #define NCI_ROUTE_PWR_STATE_BATT_OFF    0x04        /* The device's battery is removed */
-
+#if(NFC_SEC_NOT_OPEN_INCLUDED == TRUE) /* START_SLSI [S14111806] */
+#define NCI_ROUTE_PWR_STATE_SUB_1       0x08        /* Switched On sub-state 1          */
+#define NCI_ROUTE_PWR_STATE_SUB_2       0x10        /* Switched On sub-state 2          */
+#define NCI_ROUTE_PWR_STATE_SUB_3       0x20        /* Switched On sub-state 3          */
+#endif
 #define NCI_NFCEE_TAG_HW_ID             0x00       /* Hardware / Registration Identification  */
 #define NCI_NFCEE_TAG_ATR_BYTES         0x01       /* ATR Bytes  */
 #define NCI_NFCEE_TAG_T3T_INFO          0x02       /* T3T Command Set Interface Supplementary Info */
@@ -460,6 +454,7 @@ typedef UINT8 tNCI_DISCOVERY_TYPE;
 #define NCI_PARAM_ID_PB_BAILOUT         0x11
 #define NCI_PARAM_ID_PB_ATTRIB_PARAM1   0x12
 #define NCI_PARAM_ID_PF_BIT_RATE        0x18
+#define NCI_PARAM_ID_PF_RC              0x19
 #define NCI_PARAM_ID_PB_H_INFO          0x20
 #define NCI_PARAM_ID_PI_BIT_RATE        0x21
 
@@ -533,6 +528,8 @@ typedef UINT8 tNCI_DISCOVERY_TYPE;
 #define NCI_PARAM_LEN_TOTAL_DURATION        2
 
 #define NCI_PARAM_LEN_PA_FSDI               1
+
+#define NCI_PARAM_LEN_PF_RC                 1
 
 #define NCI_PARAM_LEN_LA_BIT_FRAME_SDD      1
 #define NCI_PARAM_LEN_LA_PLATFORM_CONFIG    1

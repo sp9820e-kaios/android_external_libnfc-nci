@@ -39,8 +39,6 @@ int GetNumValue(const char* name, void* p_value, unsigned long len);
 #define NAME_SCREEN_OFF_POWER_STATE     "SCREEN_OFF_POWER_STATE"
 #define NAME_PREINIT_DSP_CFG            "PREINIT_DSP_CFG"
 #define NAME_DTA_START_CFG              "DTA_START_CFG"
-#define NAME_TRANSPORT_DRIVER           "TRANSPORT_DRIVER"
-#define NAME_POWER_CONTROL_DRIVER       "POWER_CONTROL_DRIVER"
 #define NAME_PROTOCOL_TRACE_LEVEL       "PROTOCOL_TRACE_LEVEL"
 #define NAME_UART_PORT                  "UART_PORT"
 #define NAME_UART_BAUD                  "UART_BAUD"
@@ -64,6 +62,7 @@ int GetNumValue(const char* name, void* p_value, unsigned long len);
 #define NAME_NFA_DM_START_UP_VSC_CFG    "NFA_DM_START_UP_VSC_CFG"
 #define NAME_NFA_DTA_START_UP_VSC_CFG   "NFA_DTA_START_UP_VSC_CFG"
 #define NAME_UICC_LISTEN_TECH_MASK      "UICC_LISTEN_TECH_MASK"
+#define NAME_P2P_LISTEN_TECH_MASK       "P2P_LISTEN_TECH_MASK"
 #define NAME_UICC_LISTEN_TECH_EX_MASK   "UICC_LISTEN_TECH_EXCLUDE_MASK"
 #define NAME_SNOOZE_MODE_CFG            "SNOOZE_MODE_CFG"
 #define NAME_NFA_DM_DISC_DURATION_POLL  "NFA_DM_DISC_DURATION_POLL"
@@ -88,6 +87,12 @@ int GetNumValue(const char* name, void* p_value, unsigned long len);
 #define NAME_POWER_OFF_MODE             "POWER_OFF_MODE"
 #define NAME_GLOBAL_RESET               "DO_GLOBAL_RESET"
 #define NAME_NCI_HAL_MODULE             "NCI_HAL_MODULE"
+#define NAME_NFA_POLL_BAIL_OUT_MODE     "NFA_POLL_BAIL_OUT_MODE"
+#define NAME_NFA_PROPRIETARY_CFG        "NFA_PROPRIETARY_CFG"
+#if (NFC_SEC_NOT_OPEN_INCLUDED == TRUE)
+#define NAME_PARTIAL_AID                "PARTIAL_AID" /* START_SLSI [S14111807] */
+#define NAME_ESE_POWER_STABLE_TIME      "ESE_POWER_STABLE_TIME" /* START_SLSI [S16120501] */
+#endif
 
 #define                     LPTD_PARAM_LEN (40)
 

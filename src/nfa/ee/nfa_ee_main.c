@@ -16,7 +16,6 @@
  *
  ******************************************************************************/
 
-
 /******************************************************************************
  *
  *  This is the main implementation file for the NFA EE.
@@ -110,7 +109,6 @@ void nfa_ee_init (void)
 
     nfa_ee_cb.ecb[NFA_EE_CB_4_DH].ee_status       = NFC_NFCEE_STATUS_ACTIVE;
     nfa_ee_cb.ecb[NFA_EE_CB_4_DH].nfcee_id        = NFC_DH_ID;
-
     /* register message handler on NFA SYS */
     nfa_sys_register (NFA_ID_EE,  &nfa_ee_sys_reg);
 }
@@ -196,7 +194,7 @@ void nfa_ee_restore_one_ecb (tNFA_EE_ECB *p_cb)
             rsp.nfcee_id    = p_cb->nfcee_id;
             rsp.status      = NFA_STATUS_OK;
             ee_msg.p_data   = &rsp;
-            nfa_ee_nci_mode_set_rsp ((tNFA_EE_MSG *) &ee_msg);
+            nfa_ee_nci_mode_set_rsp ((void *) &ee_msg);
         }
     }
 }
@@ -304,7 +302,7 @@ void nfa_ee_proc_hci_info_cback (void)
             {
                 nfa_sys_stop_timer (&nfa_ee_cb.discv_timer);
                 data.hdr.event = NFA_EE_DISCV_TIMEOUT_EVT;
-                nfa_ee_evt_hdlr((BT_HDR *)&data);
+                nfa_ee_evt_hdlr((void *)&data);
             }
         }
     }
@@ -324,7 +322,6 @@ void nfa_ee_proc_evt (tNFC_RESPONSE_EVT event, void *p_data)
 {
     tNFA_EE_INT_EVT         int_event=0;
     tNFA_EE_NCI_WAIT_RSP    cbk;
-    BT_HDR                  *p_hdr;
 
     switch (event)
     {
@@ -357,11 +354,10 @@ void nfa_ee_proc_evt (tNFC_RESPONSE_EVT event, void *p_data)
     NFA_TRACE_DEBUG2 ("nfa_ee_proc_evt: event=0x%02x int_event:0x%x", event, int_event);
     if (int_event)
     {
-        p_hdr           = (BT_HDR *) &cbk;
         cbk.hdr.event   = int_event;
         cbk.p_data      = p_data;
 
-        nfa_ee_evt_hdlr (p_hdr);
+        nfa_ee_evt_hdlr ((void *) &cbk);
     }
 
 }
@@ -506,7 +502,6 @@ void nfa_ee_sys_disable (void)
         nfa_ee_cb.ee_flags |= NFA_EE_FLAG_WAIT_DISCONN;
         nfa_ee_cb.em_state  = NFA_EE_EM_STATE_DISABLING;
     }
-
 
     nfa_sys_stop_timer (&nfa_ee_cb.timer);
     nfa_sys_stop_timer (&nfa_ee_cb.discv_timer);
@@ -704,5 +699,3 @@ BOOLEAN nfa_ee_evt_hdlr (BT_HDR *p_msg)
 
     return TRUE;
 }
-
-

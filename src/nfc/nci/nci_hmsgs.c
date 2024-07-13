@@ -16,7 +16,6 @@
  *
  ******************************************************************************/
 
-
 /******************************************************************************
  *
  *  This file contains function of the NCI unit to format and send NCI
@@ -31,7 +30,6 @@
 #include "nci_hmsgs.h"
 #include "nfc_api.h"
 #include "nfc_int.h"
-
 /*******************************************************************************
 **
 ** Function         nci_snd_core_reset
@@ -77,7 +75,6 @@ UINT8 nci_snd_core_init (void)
 {
     BT_HDR *p;
     UINT8 *pp;
-
     if ((p = NCI_GET_CMD_BUF (NCI_CORE_PARAM_SIZE_INIT)) == NULL)
         return (NCI_STATUS_FAILED);
 
@@ -90,7 +87,6 @@ UINT8 nci_snd_core_init (void)
     NCI_MSG_BLD_HDR0 (pp, NCI_MT_CMD, NCI_GID_CORE);
     NCI_MSG_BLD_HDR1 (pp, NCI_MSG_CORE_INIT);
     UINT8_TO_STREAM (pp, NCI_CORE_PARAM_SIZE_INIT);
-
     nfc_ncif_send_cmd (p);
     return (NCI_STATUS_OK);
 }
@@ -114,6 +110,7 @@ UINT8 nci_snd_core_get_config (UINT8 *param_ids, UINT8 num_ids)
 
     p->event            = BT_EVT_TO_NFC_NCI;
     p->len              = NCI_MSG_HDR_SIZE + num_ids + 1;
+
     p->offset           = NCI_MSG_OFFSET_SIZE;
     p->layer_specific   = 0;
     pp                  = (UINT8 *) (p + 1) + p->offset;
@@ -481,6 +478,7 @@ UINT8 nci_snd_discover_map_cmd (UINT8 num, tNCI_DISCOVER_MAPS *p_maps)
     nfc_ncif_send_cmd (p);
     return (NCI_STATUS_OK);
 }
+
 /*******************************************************************************
 **
 ** Function         nci_snd_t3t_polling
@@ -531,6 +529,10 @@ UINT8 nci_snd_parameter_update_cmd (UINT8 *p_param_tlvs, UINT8 tlv_size)
     BT_HDR *p;
     UINT8 *pp;
     UINT8  num = 0, ulen, len, *pt;
+
+    //p_param_tlvs can take max 12 elements
+    if(tlv_size > 12)
+        return (NCI_STATUS_FAILED);
 
     if ((p = NCI_GET_CMD_BUF (tlv_size + 1)) == NULL)
         return (NCI_STATUS_FAILED);

@@ -34,27 +34,34 @@
 *****************************************************************************/
 
 /* NFA P2P Reason of disconnection */
-#define NFA_P2P_DISC_REASON_REMOTE_INITIATE	    0x00    /* remote initiated to disconnect  */
-#define NFA_P2P_DISC_REASON_LOCAL_INITITATE	    0x01    /* local initiated to disconnect   */
-#define NFA_P2P_DISC_REASON_NO_SERVICE	        0x02    /* no service bound in remote      */
-#define NFA_P2P_DISC_REASON_REMOTE_REJECT	    0x03    /* remote rejected connection      */
-#define NFA_P2P_DISC_REASON_FRAME_ERROR	        0x04    /* sending or receiving FRMR PDU   */
-#define NFA_P2P_DISC_REASON_LLCP_DEACTIVATED	0x05    /* LLCP link deactivated           */
-#define NFA_P2P_DISC_REASON_NO_RESOURCE	        0x06    /* Out of resource in local device */
-#define NFA_P2P_DISC_REASON_NO_INFORMATION	    0x80    /* Without information             */
+#define NFA_P2P_DISC_REASON_REMOTE_INITIATE     0x00    /* remote initiated to disconnect  */
+#define NFA_P2P_DISC_REASON_LOCAL_INITITATE     0x01    /* local initiated to disconnect   */
+#define NFA_P2P_DISC_REASON_NO_SERVICE          0x02    /* no service bound in remote      */
+#define NFA_P2P_DISC_REASON_REMOTE_REJECT       0x03    /* remote rejected connection      */
+#define NFA_P2P_DISC_REASON_FRAME_ERROR         0x04    /* sending or receiving FRMR PDU   */
+#define NFA_P2P_DISC_REASON_LLCP_DEACTIVATED    0x05    /* LLCP link deactivated           */
+#define NFA_P2P_DISC_REASON_NO_RESOURCE         0x06    /* Out of resource in local device */
+#define NFA_P2P_DISC_REASON_NO_INFORMATION      0x80    /* Without information             */
+#if (NFC_SEC_NOT_OPEN_INCLUDED == TRUE) /* START_SLSI [S15112001] */
+#define NFA_P2P_DISC_REASON_CO_LINK_NOT_SUPPORTED   0x81    /* Peer doesn't support connection-oriented link         */
+#define NFA_P2P_DISC_REASON_SSAP_NOT_REG            0x82    /* SSAP is not registered                                */
+#define NFA_P2P_DISC_REASON_SN_TOO_LONG             0x83    /* Service Name is too long                              */
+#define NFA_P2P_DISC_REASON_INVALID_MIU             0x84    /* Data link MIU shall not be bigger than local link MIU */
+#define NFA_P2P_DISC_REASON_BUSY                    0x85    /* There is pending connect request on this reg_sap      */
+#endif
 
 /* NFA P2P callback events */
 #define NFA_P2P_REG_SERVER_EVT      0x00    /* Server is registered                         */
 #define NFA_P2P_REG_CLIENT_EVT      0x01    /* Client is registered                         */
 #define NFA_P2P_ACTIVATED_EVT       0x02    /* LLCP Link has been activated                 */
-#define NFA_P2P_DEACTIVATED_EVT	    0x03    /* LLCP Link has been deactivated               */
+#define NFA_P2P_DEACTIVATED_EVT     0x03    /* LLCP Link has been deactivated               */
 #define NFA_P2P_CONN_REQ_EVT        0x04    /* Data link connection request from peer       */
 #define NFA_P2P_CONNECTED_EVT       0x05    /* Data link connection has been established    */
 #define NFA_P2P_DISC_EVT            0x06    /* Data link connection has been disconnected   */
 #define NFA_P2P_DATA_EVT            0x07    /* Data received from peer                      */
 #define NFA_P2P_CONGEST_EVT         0x08    /* Status indication of outgoing data           */
 #define NFA_P2P_LINK_INFO_EVT       0x09    /* link MIU and Well-Known Service list         */
-#define NFA_P2P_SDP_EVT	            0x0A    /* Remote SAP of SDP result                     */
+#define NFA_P2P_SDP_EVT             0x0A    /* Remote SAP of SDP result                     */
 
 typedef UINT8 tNFA_P2P_EVT;
 
@@ -573,4 +580,3 @@ NFC_API extern UINT8 NFA_P2pSetTraceLevel (UINT8 new_level);
 #endif
 
 #endif /* NFA_P2P_API_H */
-

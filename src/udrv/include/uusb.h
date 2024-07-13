@@ -38,11 +38,11 @@ extern "C" {
 
 
 /**** Status ****/
-#define UUSB_SUCCESS                                  0
-#define UUSB_DRV_INVALID_PARM                         1   // Invalid parameter(s) passed to Driver
-#define UUSB_DRV_INVALID_STATE                        2   // Driver is not in correct state to accept
-#define UUSB_DRV_UNSUPPORTED_SETUP_REQ                3   // Unsupported SETUP request (use with tUSER_EP0_SETUP_CB)
-#define UUSB_DRV_NO_BUFFER_AVAILABLE                  4   // User cannot provide a Buffer (use with CB functions)
+#define UUSB_SUCCESS                        0
+#define UUSB_DRV_INVALID_PARM               1   // Invalid parameter(s) passed to Driver
+#define UUSB_DRV_INVALID_STATE              2   // Driver is not in correct state to accept
+#define UUSB_DRV_UNSUPPORTED_SETUP_REQ      3   // Unsupported SETUP request (use with tUSER_EP0_SETUP_CB)
+#define UUSB_DRV_NO_BUFFER_AVAILABLE        4   // User cannot provide a Buffer (use with CB functions)
 
 typedef UINT8 tUUSB_STATUS;
 
@@ -72,14 +72,14 @@ typedef enum {
 typedef struct tUUSB_SETUP_PKTTag
 {
 /* Definition of "USBbmRequestType" */
-#define UUSB_DATA_PHASE_DIR      0x80    /* Mask to get data phase transfer direction */
-#define UUSB_HOST_TO_DEVICE      0x00    /* Data transfer directions */
-#define UUSB_DEVICE_TO_HOST      0x80    /* Data transfer directions */
+#define UUSB_DATA_PHASE_DIR     0x80    /* Mask to get data phase transfer direction */
+#define UUSB_HOST_TO_DEVICE     0x00    /* Data transfer directions */
+#define UUSB_DEVICE_TO_HOST     0x80    /* Data transfer directions */
 /* Types of requests */
-#define UUSB_REQUEST_TYPE		0x60	/* Mask to get request type */
-#define UUSB_STANDARD_REQUEST	0x00	/* Standard request */
-#define	UUSB_CLASS_REQUEST		0x20	/* Class request */
-#define	UUSB_VENDOR_REQUEST		0x40	/* Vendor request */
+#define UUSB_REQUEST_TYPE       0x60    /* Mask to get request type */
+#define UUSB_STANDARD_REQUEST   0x00    /* Standard request */
+#define UUSB_CLASS_REQUEST      0x20    /* Class request */
+#define UUSB_VENDOR_REQUEST     0x40    /* Vendor request */
   UINT8 bmRequestType;
   UINT8 bRequest;
   UINT16 wValue;
@@ -90,7 +90,7 @@ typedef struct tUUSB_SETUP_PKTTag
 typedef union
 {
 #define UUSB_HEAD_SIZE (8)
-	UINT8           HeadBytes[UUSB_HEAD_SIZE];
+    UINT8           HeadBytes[UUSB_HEAD_SIZE];
     tUUSB_SETUP_PKT Setup;
 } tSETUP_OR_HEAD;
 
@@ -110,16 +110,6 @@ typedef enum
 
 typedef UINT8 tEndPoint;
 
-#if 0
-#define  UUSB_ATTACHED      0
-#define  UUSB_POWERED       1
-#define  UUSB_DEFAULT       2
-#define  UUSB_ADDRESS       3
-#define  UUSB_CONFIGURED    4
-#define  UUSB_SUSPENDED     5
-
-typedef UINT8 tUUSB_BUS_STATE;
-#else
 typedef enum
 {
   UUSB_ATTACHED,
@@ -129,24 +119,23 @@ typedef enum
   UUSB_CONFIGURED,
   UUSB_SUSPENDED
 } tUUSB_BUS_STATE;
-#endif
 
 typedef enum _tUUSB_STANDART_REQ
 {
-	UUSB_GET_STATUS = 0,
-	UUSB_CLEAR_FEATURE,
-	UUSB_RESERVED1,
-	UUSB_SET_FEATURE,
-	UUSB_RESERVED2,
-	UUSB_SET_ADDRESS,
-	UUSB_GET_DESCRIPTOR,
-	UUSB_SET_DESCRIPTOR,
-	UUSB_GET_CONFIGURATION,
-	UUSB_SET_CONFIGURATION,
-	UUSB_GET_INTERFACE,
-	UUSB_SET_INTERFACE,
-	UUSB_TOTAL_sREQUEST,				/* Total number of Standard request */
-	UUSB_SYNCH_FRAME = 12
+    UUSB_GET_STATUS = 0,
+    UUSB_CLEAR_FEATURE,
+    UUSB_RESERVED1,
+    UUSB_SET_FEATURE,
+    UUSB_RESERVED2,
+    UUSB_SET_ADDRESS,
+    UUSB_GET_DESCRIPTOR,
+    UUSB_SET_DESCRIPTOR,
+    UUSB_GET_CONFIGURATION,
+    UUSB_SET_CONFIGURATION,
+    UUSB_GET_INTERFACE,
+    UUSB_SET_INTERFACE,
+    UUSB_TOTAL_sREQUEST,        /* Total number of Standard request */
+    UUSB_SYNCH_FRAME = 12
 } tUUSB_STANDART_REQ;
 
 

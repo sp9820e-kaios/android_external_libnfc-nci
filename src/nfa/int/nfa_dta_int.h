@@ -16,7 +16,6 @@
  *
  ******************************************************************************/
 
-
 /******************************************************************************
  *
  *  This is the private interface file for the NFA DTA
@@ -314,7 +313,6 @@ typedef struct {
     tNFA_HANDLE             snep_server_handle;
     tNFA_HANDLE             snep_server_conn_handle;
     tNFA_HANDLE             snep_client_handle;
-
     UINT8                   *p_snep_short_ndef;
     UINT32                  snep_short_ndef_size;
     UINT8                   *p_snep_long_ndef;
@@ -419,4 +417,3 @@ extern UINT8 *p_nfa_dta_start_up_vsc_cfg;
 
 #endif /* (NFA_DTA_INCLUDED == TRUE) */
 #endif /* NFA_DTA_INT_H */
-

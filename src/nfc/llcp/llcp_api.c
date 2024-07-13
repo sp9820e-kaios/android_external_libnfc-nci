@@ -16,7 +16,6 @@
  *
  ******************************************************************************/
 
-
 /******************************************************************************
  *
  *  This file contains the LLCP API code
@@ -30,6 +29,9 @@
 #include "llcp_api.h"
 #include "llcp_int.h"
 #include "llcp_defs.h"
+#if (NFC_SEC_NOT_OPEN_INCLUDED == TRUE) /* START_SLSI [S15112001] */
+#include "nfa_p2p_api.h"
+#endif
 
 #if (LLCP_TEST_INCLUDED == TRUE) /* this is for LLCP testing */
 
@@ -76,7 +78,7 @@ void LLCP_SetTestParams (UINT8 version, UINT16 wks)
 **                  - Delay SYMM response
 **                  - Data link connection timeout
 **                  - Delay timeout to send first PDU as initiator
-**
+**                  - firmware start symmetry
 ** Returns          void
 **
 *******************************************************************************/
@@ -158,7 +160,7 @@ void LLCP_SetConfig (UINT16 link_miu,
 **                  - Delay SYMM response
 **                  - Data link connection timeout
 **                  - Delay timeout to send first PDU as initiator
-**
+**                  - Firmware start symmetry
 ** Returns          void
 **
 *******************************************************************************/
@@ -356,7 +358,6 @@ UINT8 LLCP_RegisterServer (UINT8           reg_sap,
     UINT8  sap;
     UINT16 length;
     tLLCP_APP_CB *p_app_cb;
-
     LLCP_TRACE_API3 ("LLCP_RegisterServer (): SAP:0x%x, link_type:0x%x, ServiceName:<%s>",
                      reg_sap, link_type, ((p_service_name == NULL) ? "" : p_service_name));
 
@@ -916,7 +917,11 @@ tLLCP_STATUS LLCP_ConnectReq (UINT8                    reg_sap,
         &&((llcp_cb.lcb.peer_opt & LLCP_LSC_2) == 0)  )
     {
         LLCP_TRACE_ERROR0 ("LLCP_ConnectReq (): Peer doesn't support connection-oriented link");
+#if (NFC_SEC_NOT_OPEN_INCLUDED == TRUE) /* START_SLSI [S15112001] */
+       return NFA_P2P_DISC_REASON_CO_LINK_NOT_SUPPORTED;
+#else
         return LLCP_STATUS_FAIL;
+#endif
     }
 
     if (!p_params)
@@ -934,7 +939,11 @@ tLLCP_STATUS LLCP_ConnectReq (UINT8                    reg_sap,
         ||(p_app_cb->p_app_cback == NULL)  )
     {
         LLCP_TRACE_ERROR1 ("LLCP_ConnectReq (): SSAP (0x%x) is not registered", reg_sap);
+#if (NFC_SEC_NOT_OPEN_INCLUDED == TRUE) /* START_SLSI [S15112001] */
+        return NFA_P2P_DISC_REASON_SSAP_NOT_REG;
+#else
         return LLCP_STATUS_FAIL;
+#endif
     }
 
     if (dsap == LLCP_SAP_LM)
@@ -949,14 +958,22 @@ tLLCP_STATUS LLCP_ConnectReq (UINT8                    reg_sap,
         {
             LLCP_TRACE_ERROR1 ("LLCP_ConnectReq (): Service Name (%d bytes) is too long",
                                strlen (p_params->sn));
+#if (NFC_SEC_NOT_OPEN_INCLUDED == TRUE) /* START_SLSI [S15112001] */
+            return NFA_P2P_DISC_REASON_SN_TOO_LONG;
+#else
             return LLCP_STATUS_FAIL;
+#endif
         }
     }
 
     if ((p_params) && (p_params->miu > llcp_cb.lcb.local_link_miu))
     {
         LLCP_TRACE_ERROR0 ("LLCP_ConnectReq (): Data link MIU shall not be bigger than local link MIU");
+#if (NFC_SEC_NOT_OPEN_INCLUDED == TRUE) /* START_SLSI [S15112001] */
+        return NFA_P2P_DISC_REASON_INVALID_MIU;
+#else
         return LLCP_STATUS_FAIL;
+#endif
     }
 
     /* check if any pending connection request on this reg_sap */
@@ -968,7 +985,11 @@ tLLCP_STATUS LLCP_ConnectReq (UINT8                    reg_sap,
         ** if there is multiple pending connection request on the same local SAP.
         */
         LLCP_TRACE_ERROR0 ("LLCP_ConnectReq (): There is pending connect request on this reg_sap");
+#if (NFC_SEC_NOT_OPEN_INCLUDED == TRUE) /* START_SLSI [S15112001] */
+        return NFA_P2P_DISC_REASON_BUSY;
+#else
         return LLCP_STATUS_FAIL;
+#endif
     }
 
     p_dlcb = llcp_util_allocate_data_link (reg_sap, dsap);
@@ -1646,4 +1667,3 @@ tLLCP_STATUS LLCP_DiscoverService (char            *p_name,
 
     return LLCP_STATUS_FAIL;
 }
-

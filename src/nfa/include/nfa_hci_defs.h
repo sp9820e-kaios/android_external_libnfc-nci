@@ -16,7 +16,6 @@
  *
  ******************************************************************************/
 
-
 /******************************************************************************
  *
  *  This file contains the NFA HCI related definitions from the
@@ -100,9 +99,9 @@
 #define NFA_HCI_EVT_POST_DATA               0x02
 #define NFA_HCI_EVT_HOT_PLUG                0x03
 
-
 /* NFA HCI Connectivity gate Events */
 #define NFA_HCI_EVT_CONNECTIVITY            0x10
+#define NFA_HCI_EVT_WTXREQUEST              0x11
 #define NFA_HCI_EVT_TRANSACTION             0x12
 #define NFA_HCI_EVT_OPERATION_ENDED         0x13
 
@@ -122,6 +121,5 @@
 #define NFA_HCI_MODEL_ID_INDEX              0x05
 #define NFA_HCI_HCI_VERSION_INDEX           0x02
 #define NFA_HCI_GATES_LIST_INDEX            0x06
-
 
 #endif /* NFA_HCI_DEFS_H */

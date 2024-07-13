@@ -141,7 +141,4 @@ tNFC_STATUS NFC_SendVsCommand (UINT8          oid,
     return status;
 }
 
-
-
-
 #endif /* NFC_INCLUDED == TRUE */

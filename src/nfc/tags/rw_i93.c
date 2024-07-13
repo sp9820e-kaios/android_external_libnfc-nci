@@ -16,7 +16,6 @@
  *
  ******************************************************************************/
 
-
 /******************************************************************************
  *
  *  This file contains the implementation for ISO 15693 in Reader/Writer
@@ -35,7 +34,7 @@
 #include "rw_api.h"
 #include "rw_int.h"
 
-#define RW_I93_TOUT_RESP                        1000    /* Response timeout     */
+#define RW_I93_TOUT_RESP                        1000    /* Response timeout */
 #define RW_I93_TOUT_STAY_QUIET                  200     /* stay quiet timeout   */
 #define RW_I93_READ_MULTI_BLOCK_SIZE            128     /* max reading data if read multi block is supported */
 #define RW_I93_FORMAT_DATA_LEN                  8       /* CC, zero length NDEF, Terminator TLV              */
@@ -1952,6 +1951,11 @@ void rw_i93_sm_read_ndef (BT_HDR *p_resp)
 
     RW_TRACE_DEBUG0 ("rw_i93_sm_read_ndef ()");
 
+    if(NULL == p_resp)
+    {
+        RW_TRACE_DEBUG0 ("rw_i93_sm_read_ndef: p_resp is NULL");
+        return;
+    }
     STREAM_TO_UINT8 (flags, p);
     length--;
 
@@ -1997,6 +2001,11 @@ void rw_i93_sm_read_ndef (BT_HDR *p_resp)
 
         p_i93->rw_length += p_resp->len;
     }
+    else
+    {
+        /* in case of no Ndef data included */
+        p_resp->len = 0;
+    }
 
     /* if read all of NDEF data */
     if (p_i93->rw_length >= p_i93->ndef_length)
@@ -2019,7 +2028,10 @@ void rw_i93_sm_read_ndef (BT_HDR *p_resp)
                          p_resp->len,
                          p_i93->ndef_length);
 
-        (*(rw_cb.p_cback)) (RW_I93_NDEF_READ_EVT, &rw_data);
+        if (p_resp->len > 0)
+        {
+            (*(rw_cb.p_cback)) (RW_I93_NDEF_READ_EVT, &rw_data);
+        }
 
         /* this will make read data from next block */
         p_i93->rw_offset += length;
@@ -3043,6 +3055,7 @@ static void rw_i93_data_cback (UINT8 conn_id, tNFC_CONN_EVT event, tNFC_CONN *p_
 #if (BT_TRACE_VERBOSE == TRUE)
     UINT8  begin_state   = p_i93->state;
 #endif
+    (void)conn_id;
 
     RW_TRACE_DEBUG1 ("rw_i93_data_cback () event = 0x%X", event);
 
@@ -3080,6 +3093,13 @@ static void rw_i93_data_cback (UINT8 conn_id, tNFC_CONN_EVT event, tNFC_CONN *p_
         }
         else
         {
+            /* free retry buffer */
+            if (p_i93->p_retry_cmd)
+            {
+                GKI_freebuf (p_i93->p_retry_cmd);
+                p_i93->p_retry_cmd = NULL;
+                p_i93->retry_count = 0;
+            }
             NFC_SetStaticRfCback (NULL);
             p_i93->state = RW_I93_STATE_NOT_ACTIVATED;
         }

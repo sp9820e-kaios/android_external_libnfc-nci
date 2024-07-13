@@ -82,6 +82,8 @@ typedef struct
 #define LLCP_LINK_TIMEOUT                   0x06    /* Link has been deactivated by timeout     */
 #define LLCP_LINK_FRAME_ERROR               0x07    /* Link has been deactivated by frame error */
 #define LLCP_LINK_RF_LINK_LOSS_NO_RX_LLC    0x08    /* RF link loss without any rx LLC PDU      */
+
+
 #define LLCP_LINK_RF_TRANSMISSION_ERR       NFC_STATUS_RF_TRANSMISSION_ERR
 #define LLCP_LINK_RF_PROTOCOL_ERR           NFC_STATUS_RF_PROTOCOL_ERR
 #define LLCP_LINK_RF_TIMEOUT                NFC_STATUS_TIMEOUT
@@ -226,7 +228,7 @@ extern "C"
 **                  - Delay SYMM response
 **                  - Data link connection timeout
 **                  - Delay timeout to send first PDU as initiator
-**
+**                  - Firmware start symmetry
 ** Returns          void
 **
 *******************************************************************************/
@@ -254,7 +256,7 @@ LLCP_API extern void LLCP_SetConfig (UINT16 link_miu,
 **                  - Delay SYMM response
 **                  - Data link connection timeout
 **                  - Delay timeout to send first PDU as initiator
-**
+**                  - Firmware start symmetry
 ** Returns          void
 **
 *******************************************************************************/
@@ -686,4 +688,3 @@ LLCP_API extern void LLCP_SetTestParams (UINT8 version, UINT16 wks);
 #endif
 
 #endif  /* LLCP_API_H */
-

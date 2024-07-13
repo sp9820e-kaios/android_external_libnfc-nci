@@ -16,7 +16,6 @@
  *
  ******************************************************************************/
 
-
 /******************************************************************************
  *
  *  this file contains the main NFC Upper Layer internal definitions and
@@ -51,7 +50,6 @@ extern "C" {
 /* NFC Timer events */
 #define NFC_TTYPE_NCI_WAIT_RSP              0
 #define NFC_TTYPE_WAIT_2_DEACTIVATE         1
-
 #define NFC_TTYPE_LLCP_LINK_MANAGER         100
 #define NFC_TTYPE_LLCP_LINK_INACT           101
 #define NFC_TTYPE_LLCP_DATA_LINK            102
@@ -62,6 +60,9 @@ extern "C" {
 #define NFC_TTYPE_RW_T4T_RESPONSE           107
 #define NFC_TTYPE_RW_I93_RESPONSE           108
 #define NFC_TTYPE_CE_T4T_UPDATE             109
+
+#define NFC_TTYPE_P2P_PRIO_RESPONSE         110  /* added for p2p prio logic timer */
+#define NFC_TTYPE_P2P_PRIO_LOGIC_CLEANUP    111  /* added for p2p prio logic clenaup */
 #define NFC_TTYPE_VS_BASE                   200
 
 
@@ -80,6 +81,13 @@ enum
     NFC_STATE_NFCC_POWER_OFF_SLEEP  /* NFCC is power-off sleep mode             */
 };
 typedef UINT8 tNFC_STATE;
+
+/* DM P2P Priority event type */
+enum
+{
+    NFA_DM_P2P_PRIO_RSP = 0x01,         /* P2P priority event from RSP   */
+    NFA_DM_P2P_PRIO_NTF          /* P2P priority event from NTF   */
+};
 
 /* NFC control block flags */
 #define NFC_FL_DEACTIVATING             0x0001  /* NFC_Deactivate () is called and the NCI cmd is not sent   */
@@ -190,9 +198,7 @@ typedef struct
 
     BT_HDR              *p_nci_init_rsp;    /* holding INIT_RSP until receiving HAL_NFC_POST_INIT_CPLT_EVT */
     tHAL_NFC_ENTRY      *p_hal;
-
 } tNFC_CB;
-
 
 /*****************************************************************************
 **  EXTERNAL FUNCTION DECLARATIONS
@@ -225,7 +231,7 @@ void nfc_ncif_send (BT_HDR *p_buf, BOOLEAN is_cmd);
 extern UINT8 nfc_ncif_send_data (tNFC_CONN_CB *p_cb, BT_HDR *p_data);
 NFC_API extern void nfc_ncif_cmd_timeout (void);
 NFC_API extern void nfc_wait_2_deactivate_timeout (void);
-
+NFC_API extern void nfc_ncif_credit_ntf_timeout (void);
 NFC_API extern BOOLEAN nfc_ncif_process_event (BT_HDR *p_msg);
 NFC_API extern void nfc_ncif_check_cmd_queue (BT_HDR *p_buf);
 NFC_API extern void nfc_ncif_send_cmd (BT_HDR *p_buf);
@@ -249,6 +255,17 @@ NFC_API extern void nfc_ncif_proc_reset_rsp (UINT8 *p, BOOLEAN is_ntf);
 NFC_API extern void nfc_ncif_proc_init_rsp (BT_HDR *p_msg);
 NFC_API extern void nfc_ncif_proc_get_config_rsp (BT_HDR *p_msg);
 NFC_API extern void nfc_ncif_proc_data (BT_HDR *p_msg);
+NFC_API extern BOOLEAN nfa_dm_p2p_prio_logic(UINT8 event, UINT8 *p, UINT8 ntf_rsp);
+NFC_API extern void nfa_dm_p2p_timer_event ();
+NFC_API extern void nfa_dm_p2p_prio_logic_cleanup ();
+
+
+#if (NFC_SEC_NOT_OPEN_INCLUDED == TRUE) /* START_SLSI [S14111810] */
+NFC_API extern void nfc_extract_AIDTableSize(UINT8 * p_buf);
+#endif
+#if (NFC_SEC_NOT_OPEN_INCLUDED == TRUE) /* START_SLSI [S14111902] */
+NFC_API extern void nfc_extract_FWVersion(UINT8 * p_buf);
+#endif
 
 #if (NFC_RW_ONLY == FALSE)
 NFC_API extern void nfc_ncif_proc_rf_field_ntf (UINT8 rf_status);
@@ -275,7 +292,6 @@ void nfc_stop_timer (TIMER_LIST_ENT *p_tle);
 void nfc_start_quick_timer (TIMER_LIST_ENT *p_tle, UINT16 type, UINT32 timeout);
 void nfc_stop_quick_timer (TIMER_LIST_ENT *p_tle);
 void nfc_process_quick_timer_evt (void);
-
 
 #ifdef __cplusplus
 }

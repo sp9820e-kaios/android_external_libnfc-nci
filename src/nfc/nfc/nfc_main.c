@@ -16,7 +16,6 @@
  *
  ******************************************************************************/
 
-
 /******************************************************************************
  *
  *  This file contains functions that interface with the NFC NCI transport.
@@ -29,6 +28,7 @@
 #include "nfc_target.h"
 #include "bt_types.h"
 #include "hcidefs.h"
+#include <stdlib.h>
 
 #if (NFC_INCLUDED == TRUE)
 #include "nfc_hal_api.h"
@@ -37,7 +37,7 @@
 #include "nci_hmsgs.h"
 #include "rw_int.h"
 #include "ce_int.h"
-
+#include "nfa_sys.h"
 
 #if (NFC_RW_ONLY == FALSE)
 #include "ce_api.h"
@@ -47,7 +47,6 @@
 /* NFC mandates support for at least one logical connection;
  * Update max_conn to the NFCC capability on InitRsp */
 #define NFC_SET_MAX_CONN_DEFAULT()    {nfc_cb.max_conn = 1;}
-
 #else /* NFC_RW_ONLY */
 #define ce_init()
 #define llcp_init()
@@ -76,6 +75,7 @@ static const tNCI_DISCOVER_MAPS nfc_interface_mapping[NFC_NUM_INTERFACE_MAP] =
         NCI_INTERFACE_MODE_POLL_N_LISTEN,
         NCI_INTERFACE_ISO_DEP
     }
+
 #if (NFC_RW_ONLY == FALSE)
     ,
     /* this can not be set here due to 2079xB0 NFCC issues */
@@ -85,6 +85,7 @@ static const tNCI_DISCOVER_MAPS nfc_interface_mapping[NFC_NUM_INTERFACE_MAP] =
         NCI_INTERFACE_NFC_DEP
     }
 #endif
+
 };
 
 
@@ -169,6 +170,7 @@ static char *nfc_hal_event_name (UINT8 event)
 }
 #endif /* BT_TRACE_VERBOSE == TRUE */
 
+
 /*******************************************************************************
 **
 ** Function         nfc_main_notify_enable_status
@@ -238,7 +240,7 @@ void nfc_enabled (tNFC_STATUS nfc_status, BT_HDR *p_init_rsp_msg)
         {
             if ((*p) <= NCI_INTERFACE_MAX)
                 evt_data.enable.nci_interfaces |= (1 << (*p));
-            else if (((*p) > NCI_INTERFACE_FIRST_VS) && (yy < NFC_NFCC_MAX_NUM_VS_INTERFACE))
+            else if (((*p) >= NCI_INTERFACE_FIRST_VS) && (yy < NFC_NFCC_MAX_NUM_VS_INTERFACE))
             {
                 /* save the VS RF interface in control block, if there's still room */
                 nfc_cb.vs_interface[yy++] = *p;
@@ -322,6 +324,7 @@ void nfc_gen_cleanup (void)
     if (nfc_cb.flags & NFC_FL_DISCOVER_PENDING)
     {
         nfc_cb.flags &= ~NFC_FL_DISCOVER_PENDING;
+
         GKI_freebuf (nfc_cb.p_disc_pending);
         nfc_cb.p_disc_pending = NULL;
     }
@@ -338,7 +341,6 @@ void nfc_gen_cleanup (void)
         GKI_freebuf (nfc_cb.p_nci_init_rsp);
         nfc_cb.p_nci_init_rsp = NULL;
     }
-
     /* clear any pending CMD/RSP */
     nfc_main_flush_cmd_queue ();
 }
@@ -353,7 +355,6 @@ void nfc_gen_cleanup (void)
 void nfc_main_handle_hal_evt (tNFC_HAL_EVT_MSG *p_msg)
 {
     UINT8  *ps;
-
     NFC_TRACE_DEBUG1 ("nfc_main_handle_hal_evt(): HAL event=0x%x", p_msg->hal_evt);
 
     switch (p_msg->hal_evt)
@@ -486,7 +487,6 @@ void nfc_main_handle_hal_evt (tNFC_HAL_EVT_MSG *p_msg)
             break;
         }
         break;
-
     default:
         NFC_TRACE_ERROR1 ("nfc_main_handle_hal_evt (): unhandled event (0x%x).", p_msg->hal_evt);
         break;
@@ -570,7 +570,6 @@ static void nfc_main_hal_cback(UINT8 event, tHAL_NFC_STATUS status)
 #else
     NFC_TRACE_DEBUG2 ("nfc_main_hal_cback event: 0x%x, status=%d", event, status);
 #endif
-
     switch (event)
     {
     case HAL_NFC_OPEN_CPLT_EVT:
@@ -600,7 +599,6 @@ static void nfc_main_hal_cback(UINT8 event, tHAL_NFC_STATUS status)
     case HAL_NFC_ERROR_EVT:
         nfc_main_post_hal_evt (event, status);
         break;
-
     default:
         NFC_TRACE_DEBUG1 ("nfc_main_hal_cback unhandled event %x", event);
         break;
@@ -681,7 +679,6 @@ tNFC_STATUS NFC_Enable (tNFC_RESPONSE_CBACK *p_cback)
     /* Open HAL transport. */
     nfc_set_state (NFC_STATE_W4_HAL_OPEN);
     nfc_cb.p_hal->open (nfc_main_hal_cback, nfc_main_hal_data_cback);
-
     return (NFC_STATUS_OK);
 }
 
@@ -703,7 +700,6 @@ tNFC_STATUS NFC_Enable (tNFC_RESPONSE_CBACK *p_cback)
 void NFC_Disable (void)
 {
     NFC_TRACE_API1 ("NFC_Disable (): nfc_state = %d", nfc_cb.nfc_state);
-
     if ((nfc_cb.nfc_state == NFC_STATE_NONE) || (nfc_cb.nfc_state == NFC_STATE_NFCC_POWER_OFF_SLEEP))
     {
         nfc_set_state (NFC_STATE_NONE);
@@ -751,10 +747,10 @@ void NFC_Init (tHAL_NFC_ENTRY *p_hal_entry_tbl)
     nfc_cb.trace_level      = NFC_INITIAL_TRACE_LEVEL;
     nfc_cb.nci_ctrl_size    = NCI_CTRL_INIT_SIZE;
     nfc_cb.reassembly       = TRUE;
-
     rw_init ();
     ce_init ();
     llcp_init ();
+
     NFC_SET_MAX_CONN_DEFAULT ();
 }
 
@@ -840,10 +836,15 @@ tNFC_STATUS NFC_DiscoveryMap (UINT8 num, tNFC_DISCOVER_MAPS *p_maps,
     UINT8   xx, yy, num_intf, intf_mask;
     tNFC_DISCOVER_MAPS  max_maps[NFC_NFCC_MAX_NUM_VS_INTERFACE + NCI_INTERFACE_MAX];
     BOOLEAN is_supported;
-
     nfc_cb.p_discv_cback = p_cback;
     num_intf             = 0;
     NFC_TRACE_DEBUG1 ("nci_interfaces supported by NFCC: 0x%x", nfc_cb.nci_interfaces);
+
+    for(xx = 0; xx < NFC_NFCC_MAX_NUM_VS_INTERFACE + NCI_INTERFACE_MAX; xx++)
+    {
+        memset(&max_maps[xx], 0x00, sizeof(tNFC_DISCOVER_MAPS));
+    }
+
     for (xx = 0; xx < num_disc_maps; xx++)
     {
         is_supported = FALSE;
@@ -873,6 +874,14 @@ tNFC_STATUS NFC_DiscoveryMap (UINT8 num, tNFC_DISCOVER_MAPS *p_maps,
         }
     }
 
+    NFC_TRACE_WARNING1 ("num_intf = 0x%2x",num_intf);
+
+    for(xx = 0; xx < NFC_NFCC_MAX_NUM_VS_INTERFACE + NCI_INTERFACE_MAX; xx++)
+    {
+        NFC_TRACE_WARNING2 ("max_maps[%d].intf_type = 0x%20x",xx,max_maps[xx].intf_type);
+        NFC_TRACE_WARNING2 ("max_maps[%d].mode = 0x%20x",xx,max_maps[xx].mode);
+        NFC_TRACE_WARNING2 ("max_maps[%d].protocol = 0x%20x",xx,max_maps[xx].protocol);
+    }
     return nci_snd_discover_map_cmd (num_intf, (tNCI_DISCOVER_MAPS *) max_maps);
 }
 
@@ -912,6 +921,7 @@ tNFC_STATUS NFC_DiscoveryStart (UINT8                 num_params,
         nfc_cb.flags        |= NFC_FL_DISCOVER_PENDING;
         nfc_cb.flags        |= NFC_FL_CONTROL_REQUESTED;
         params_size          = sizeof (tNFC_DISCOVER_PARAMS) * num_params;
+
         nfc_cb.p_disc_pending = GKI_getbuf ((UINT16)(BT_HDR_SIZE + 1 + params_size));
         if (nfc_cb.p_disc_pending)
         {

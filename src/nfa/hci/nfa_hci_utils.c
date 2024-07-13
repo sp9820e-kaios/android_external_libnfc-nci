@@ -16,7 +16,6 @@
  *
  ******************************************************************************/
 
-
 /******************************************************************************
  *
  *  This file contains the utility functions for the NFA HCI.
@@ -367,7 +366,7 @@ tNFA_STATUS nfa_hciu_send_msg (UINT8 pipe_id, UINT8 type, UINT8 instruction, UIN
                 p_buf->len++;
             }
 
-            if (data_len != 0)
+            if ((data_len != 0) && (p_msg != NULL))
             {
                 memcpy (p_data, p_msg, data_len);
 
@@ -404,7 +403,6 @@ tNFA_STATUS nfa_hciu_send_msg (UINT8 pipe_id, UINT8 type, UINT8 instruction, UIN
 
         nfa_sys_start_timer (&nfa_hci_cb.timer, NFA_HCI_RSP_TIMEOUT_EVT, p_nfa_hci_cfg->hcp_response_timeout);
     }
-
     return status;
 }
 
@@ -540,6 +538,12 @@ tNFA_HCI_RESPONSE nfa_hciu_add_pipe_to_gate (UINT8 pipe_id,   UINT8 local_gate,
             /* Save the pipe in the gate that it belongs to */
             pipe_index = (UINT8) (p_pipe - nfa_hci_cb.cfg.dyn_pipes);
             p_gate->pipe_inx_mask |= (UINT32) (1 << pipe_index);
+
+#if (NFC_SEC_NOT_OPEN_INCLUDED == TRUE) /* START_SLSI [S160503001] */
+            NFA_TRACE_DEBUG1 ("HCI Patch - p_gate->gate_owner(0x%02X)", p_gate->gate_owner);
+            if(p_gate->gate_owner == 0x00)       // Patch for no  SecureElement object at this time.
+                p_gate->gate_owner = NFA_HANDLE_GROUP_HCI;
+#endif
 
             NFA_TRACE_DEBUG4 ("nfa_hciu_add_pipe_to_gate  Gate ID: 0x%02x  Pipe ID: 0x%02x  pipe_index: %u  App Handle: 0x%08x",
                               local_gate, pipe_id, pipe_index, p_gate->gate_owner);
@@ -915,7 +919,6 @@ void nfa_hciu_remove_all_pipes_from_host (UINT8 host)
         {
             evt_data.deleted.status = NFA_STATUS_OK;
             evt_data.deleted.pipe   = pp->pipe_id;
-
             nfa_hciu_send_to_app (NFA_HCI_DELETE_PIPE_EVT, &evt_data, pg->gate_owner);
         }
         nfa_hciu_release_pipe (pp->pipe_id);
@@ -1132,7 +1135,6 @@ void nfa_hciu_send_to_all_apps (tNFA_HCI_EVT event, tNFA_HCI_EVT_DATA *p_evt)
         if (nfa_hci_cb.p_app_cback[app_inx] != NULL)
             nfa_hci_cb.p_app_cback[app_inx] (event, p_evt);
     }
-
 }
 
 /*******************************************************************************
@@ -1299,7 +1301,6 @@ char *nfa_hciu_get_event_name (UINT16 event)
     case NFA_HCI_RSP_NV_WRITE_EVT:            return ("NV_WRITE_EVT");
     case NFA_HCI_RSP_TIMEOUT_EVT:             return ("RESPONSE_TIMEOUT_EVT");
     case NFA_HCI_CHECK_QUEUE_EVT:             return ("CHECK_QUEUE");
-
     default:
         return ("UNKNOWN");
     }
@@ -1327,7 +1328,6 @@ char *nfa_hciu_get_state_name (UINT8 state)
     case NFA_HCI_STATE_APP_DEREGISTER:       return ("APP_DEREGISTER");
     case NFA_HCI_STATE_RESTORE:              return ("RESTORE");
     case NFA_HCI_STATE_RESTORE_NETWK_ENABLE: return ("WAIT_NETWK_ENABLE_AFTER_RESTORE");
-
     default:
         return ("UNKNOWN");
     }
@@ -1418,6 +1418,7 @@ static void handle_debug_loopback (BT_HDR *p_buf, UINT8 pipe, UINT8 type, UINT8 
 {
     UINT8 *p = (UINT8 *) (p_buf + 1) + p_buf->offset;
     static UINT8  next_pipe = 0x10;
+    (void)pipe;
 
     if (type == NFA_HCI_COMMAND_TYPE)
     {
@@ -1454,4 +1455,3 @@ static void handle_debug_loopback (BT_HDR *p_buf, UINT8 pipe, UINT8 type, UINT8 
     p_buf->event = NFA_HCI_CHECK_QUEUE_EVT;
     nfa_sys_sendmsg (p_buf);
 }
-

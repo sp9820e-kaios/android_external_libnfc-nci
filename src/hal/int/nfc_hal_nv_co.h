@@ -108,5 +108,10 @@ void nfc_hal_nv_co_read (UINT8 *p_buf, UINT16 nbytes, UINT8 block);
 *******************************************************************************/
 void nfc_hal_nv_co_write (const UINT8 *p_buf, UINT16 nbytes, UINT8 block);
 
+#if (NFC_SEC_NOT_OPEN_INCLUDED == TRUE)
+extern void nfa_nv_ci_read (UINT16 num_bytes_read, tNFA_NV_CO_STATUS status, UINT8 block);
+extern void nfa_nv_ci_write (tNFA_NV_CO_STATUS status);
+#endif
+
 #endif /* NFC_HAL_HCI_INCLUDED */
 #endif /* NFC_HAL_NV_CO_H */
